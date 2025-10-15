@@ -1,4 +1,15 @@
 import React, { useState } from "react";
+import {
+  Alert,
+  Button,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 export default function VeterinarioForm() {
   const [veterinario, setVeterinario] = useState({
@@ -16,28 +27,23 @@ export default function VeterinarioForm() {
     },
   });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (field, value) => {
     const enderecoFields = ["bairro", "cidade", "cep", "numero", "estado", "complemento"];
-
-    if (enderecoFields.includes(name)) {
+    if (enderecoFields.includes(field)) {
       setVeterinario((prev) => ({
         ...prev,
-        endereco: { ...prev.endereco, [name]: value },
+        endereco: { ...prev.endereco, [field]: value },
       }));
     } else {
-      setVeterinario((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      setVeterinario((prev) => ({ ...prev, [field]: value }));
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert("Veterinário cadastrado com sucesso!");
+  const handleSubmit = () => {
+    Alert.alert("Sucesso", "Veterinário cadastrado com sucesso!");
     console.log("Dados do veterinário:", veterinario);
 
+    // Limpar os campos
     setVeterinario({
       crmv: "",
       nome: "",
@@ -55,210 +61,164 @@ export default function VeterinarioForm() {
   };
 
   return (
-    <div className="page-container">
-      <form className="form" onSubmit={handleSubmit}>
-        <h2>Cadastro de Veterinário</h2>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.form}>
+          <Text style={styles.title}>Cadastro de Veterinário</Text>
 
-        <div className="input-group">
-          <label>CRMV *</label>
-          <input
-            type="text"
-            name="crmv"
+          {/* Campos principais */}
+          <Text style={styles.label}>CRMV *</Text>
+          <TextInput
+            style={styles.input}
             value={veterinario.crmv}
-            onChange={handleChange}
-            required
+            onChangeText={(text) => handleChange("crmv", text)}
+            placeholder="Digite o CRMV"
           />
-        </div>
 
-        <div className="input-group">
-          <label>Nome *</label>
-          <input
-            type="text"
-            name="nome"
+          <Text style={styles.label}>Nome *</Text>
+          <TextInput
+            style={styles.input}
             value={veterinario.nome}
-            onChange={handleChange}
-            required
+            onChangeText={(text) => handleChange("nome", text)}
+            placeholder="Digite o nome"
           />
-        </div>
 
-        <div className="input-group">
-          <label>Email *</label>
-          <input
-            type="email"
-            name="email"
+          <Text style={styles.label}>Email *</Text>
+          <TextInput
+            style={styles.input}
             value={veterinario.email}
-            onChange={handleChange}
-            required
+            onChangeText={(text) => handleChange("email", text)}
+            placeholder="Digite o email"
+            keyboardType="email-address"
           />
-        </div>
 
-        <div className="input-group">
-          <label>Telefone *</label>
-          <input
-            type="tel"
-            name="telefone"
+          <Text style={styles.label}>Telefone *</Text>
+          <TextInput
+            style={styles.input}
             value={veterinario.telefone}
-            onChange={handleChange}
-            required
+            onChangeText={(text) => handleChange("telefone", text)}
+            placeholder="(DDD) 99999-9999"
+            keyboardType="phone-pad"
           />
-        </div>
 
-        <fieldset>
-          <legend>Endereço</legend>
+          {/* Endereço */}
+          <View style={styles.fieldset}>
+            <Text style={styles.legend}>Endereço</Text>
 
-          <div className="input-group">
-            <label>Bairro *</label>
-            <input
-              type="text"
-              name="bairro"
+            <Text style={styles.label}>Bairro *</Text>
+            <TextInput
+              style={styles.input}
               value={veterinario.endereco.bairro}
-              onChange={handleChange}
-              required
+              onChangeText={(text) => handleChange("bairro", text)}
+              placeholder="Digite o bairro"
             />
-          </div>
 
-          <div className="input-group">
-            <label>Cidade *</label>
-            <input
-              type="text"
-              name="cidade"
+            <Text style={styles.label}>Cidade *</Text>
+            <TextInput
+              style={styles.input}
               value={veterinario.endereco.cidade}
-              onChange={handleChange}
-              required
+              onChangeText={(text) => handleChange("cidade", text)}
+              placeholder="Digite a cidade"
             />
-          </div>
 
-          <div className="input-group">
-            <label>Estado *</label>
-            <input
-              type="text"
-              name="estado"
+            <Text style={styles.label}>Estado *</Text>
+            <TextInput
+              style={styles.input}
               value={veterinario.endereco.estado}
-              onChange={handleChange}
-              required
+              onChangeText={(text) => handleChange("estado", text)}
+              placeholder="Digite o estado"
             />
-          </div>
 
-          <div className="input-group">
-            <label>CEP *</label>
-            <input
-              type="text"
-              name="cep"
+            <Text style={styles.label}>CEP *</Text>
+            <TextInput
+              style={styles.input}
               value={veterinario.endereco.cep}
-              onChange={handleChange}
-              required
+              onChangeText={(text) => handleChange("cep", text)}
+              placeholder="Digite o CEP"
+              keyboardType="numeric"
             />
-          </div>
 
-          <div className="input-group">
-            <label>Número *</label>
-            <input
-              type="text"
-              name="numero"
+            <Text style={styles.label}>Número *</Text>
+            <TextInput
+              style={styles.input}
               value={veterinario.endereco.numero}
-              onChange={handleChange}
-              required
+              onChangeText={(text) => handleChange("numero", text)}
+              placeholder="Número da casa"
             />
-          </div>
 
-          <div className="input-group">
-            <label>Complemento</label>
-            <input
-              type="text"
-              name="complemento"
+            <Text style={styles.label}>Complemento</Text>
+            <TextInput
+              style={styles.input}
               value={veterinario.endereco.complemento}
-              onChange={handleChange}
+              onChangeText={(text) => handleChange("complemento", text)}
+              placeholder="Complemento (opcional)"
             />
-          </div>
-        </fieldset>
+          </View>
 
-        <button type="submit">Cadastrar</button>
-      </form>
-
-      <style jsx>{`
-        .page-container {
-          display: flex;
-          justify-content: center;
-          align-items: flex-start;
-          height: 100vh;
-          background-color: #f2f2f2;
-          padding: 1rem;
-          overflow-y: auto; /* ✅ Barra de rolagem para mobile */
-        }
-
-        .form {
-          background: white;
-          width: 100%;
-          max-width: 500px;
-          border-radius: 12px;
-          padding: 1.5rem;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        h2 {
-          text-align: center;
-          margin-bottom: 0.5rem;
-        }
-
-        .input-group {
-          display: flex;
-          flex-direction: column;
-        }
-
-        label {
-          font-weight: 500;
-          margin-bottom: 4px;
-          color: #333;
-        }
-
-        input {
-          padding: 10px;
-          border-radius: 6px;
-          border: 1px solid #ccc;
-          font-size: 1rem;
-          width: 100%;
-        }
-
-        fieldset {
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          padding: 1rem;
-          margin-top: 1rem;
-        }
-
-        legend {
-          font-weight: bold;
-          padding: 0 8px;
-        }
-
-        button {
-          background-color: #007bff;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          padding: 12px;
-          font-size: 1.1rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        button:hover {
-          background-color: #0056b3;
-        }
-
-        @media (max-width: 480px) {
-          .form {
-            padding: 1rem;
-            border-radius: 8px;
-          }
-          input {
-            font-size: 0.95rem;
-          }
-        }
-      `}</style>
-    </div>
+          <View style={styles.buttonContainer}>
+            <Button title="Cadastrar" onPress={handleSubmit} color="#007bff" />
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f2f2",
+  },
+  scroll: {
+    padding: 16,
+  },
+  form: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    elevation: 3, // sombra Android
+    shadowColor: "#000", // sombra iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+  },
+  title: {
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginTop: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    backgroundColor: "#fafafa",
+    marginTop: 4,
+  },
+  fieldset: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 20,
+  },
+  legend: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    marginTop: 20,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+});
