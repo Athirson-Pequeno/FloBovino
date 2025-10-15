@@ -76,90 +76,146 @@ export const VeterinarioForm: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Cadastro de Veterinário</h2>
-      <label>
-        CRMV *:
-        <input
-          type="text"
-          name="crmv"
-          value={veterinario.crmv}
-          onChange={handleChange}
-          required
-        />
-      </label>
-      <br />
-      <label>
-        Nome *:
-        <input
-          type="text"
-          name="nome"
-          value={veterinario.nome}
-          onChange={handleChange}
-          required
-        />
-      </label>
-      <br />
-      <label>
-        Email *:
-        <input
-          type="email"
-          name="email"
-          value={veterinario.email}
-          onChange={handleChange}
-          required
-        />
-      </label>
-      <br />
-      <fieldset>
-        <legend>Endereço</legend>
-        <label>
-          Bairro *:
-          <input
-            type="text"
-            name="bairro"
-            value={veterinario.endereco.bairro}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Cidade *:
-          <input
-            type="text"
-            name="cidade"
-            value={veterinario.endereco.cidade}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          CEP *:
-          <input
-            type="text"
-            name="cep"
-            value={veterinario.endereco.cep}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Número *:
-          <input
-            type="text"
-            name="numero"
-            value={veterinario.endereco.numero}
-            onChange={handleChange}
-            required
-          />
-        </label>
-      </fieldset>
-      <br />
-      <button type="submit">Cadastrar</button>
-    </form>
+    <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+      <form onSubmit={handleSubmit} style={{ maxWidth: 500, margin: '0 auto', padding: 16, border: '1px solid #ccc', borderRadius: 8 }}>
+        <h2 style={{ textAlign: 'center' }}>Cadastro de Veterinário</h2>
+        <div style={{ marginBottom: 12 }}>
+          <label>
+            CRMV *:<br />
+            <input
+              type="text"
+              name="crmv"
+              value={veterinario.crmv}
+              onChange={handleChange}
+              required
+              style={{ width: '100%' }}
+            />
+          </label>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>
+            Nome *:<br />
+            <input
+              type="text"
+              name="nome"
+              value={veterinario.nome}
+              onChange={handleChange}
+              required
+              style={{ width: '100%' }}
+            />
+          </label>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>
+            Email *:<br />
+            <input
+              type="email"
+              name="email"
+              value={veterinario.email}
+              onChange={handleChange}
+              required
+              style={{ width: '100%' }}
+            />
+          </label>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>
+            Telefone *:<br />
+            <input
+              type="text"
+              name="telefone"
+              value={veterinario.telefone}
+              onChange={handleChange}
+              required
+              style={{ width: '100%' }}
+            />
+          </label>
+        </div>
+        <fieldset style={{ marginBottom: 16, padding: 12 }}>
+          <legend>Endereço</legend>
+          <div style={{ marginBottom: 8 }}>
+            <label>
+              Bairro *:<br />
+              <input
+                type="text"
+                name="bairro"
+                value={veterinario.endereco.bairro}
+                onChange={handleChange}
+                required
+                style={{ width: '100%' }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <label>
+              Cidade *:<br />
+              <input
+                type="text"
+                name="cidade"
+                value={veterinario.endereco.cidade}
+                onChange={handleChange}
+                required
+                style={{ width: '100%' }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <label>
+              Estado *:<br />
+              <input
+                type="text"
+                name="estado"
+                value={veterinario.endereco.estado}
+                onChange={handleChange}
+                required
+                style={{ width: '100%' }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <label>
+              CEP *:<br />
+              <input
+                type="text"
+                name="cep"
+                value={veterinario.endereco.cep}
+                onChange={handleChange}
+                required
+                style={{ width: '100%' }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <label>
+              Número *:<br />
+              <input
+                type="text"
+                name="numero"
+                value={veterinario.endereco.numero}
+                onChange={handleChange}
+                required
+                style={{ width: '100%' }}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <label>
+              Complemento:<br />
+              <input
+                type="text"
+                name="complemento"
+                value={veterinario.endereco.complemento}
+                onChange={handleChange}
+                style={{ width: '100%' }}
+              />
+            </label>
+          </div>
+        </fieldset>
+        <div style={{ textAlign: 'center' }}>
+          <button type="submit" style={{ padding: '8px 24px', fontSize: 16 }}>Cadastrar</button>
+        </div>
+      </form>
+    </div>
   );
 };
 
