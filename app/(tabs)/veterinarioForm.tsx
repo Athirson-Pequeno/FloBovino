@@ -27,7 +27,7 @@ export default function VeterinarioForm() {
     },
   });
 
-  const handleChange = (field, value) => {
+  const handleChange = (field: string, value: string | number) => {
     const enderecoFields = ["bairro", "cidade", "cep", "numero", "estado", "complemento"];
     if (enderecoFields.includes(field)) {
       setVeterinario((prev) => ({
