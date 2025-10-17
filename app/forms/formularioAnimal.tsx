@@ -15,9 +15,9 @@ import {
 
 type Vacina = {
   id: string;
-  dataAplicacao: string; // dd/mm/aaaa
+  dataAplicacao: string;
   tipo: string;
-  validadeDias: string; // string p/ facilitar 
+  validadeDias: string;
 };
 
 type AnimalForm = {
@@ -120,7 +120,6 @@ export default function FormularioAnimal() {
     }));
   };
 
-  // ✅ validação mínima
   const obrigatoriosOk =
     !!form.nome.trim() &&
     !!form.raca.trim() &&
@@ -128,7 +127,6 @@ export default function FormularioAnimal() {
     !!form.dataNascimento.trim();
 
   const onSalvar = () => {
-    console.log("onSalvar -> clicado");
     if (!obrigatoriosOk) {
       Alert.alert(
         "Campos obrigatórios",
@@ -136,12 +134,12 @@ export default function FormularioAnimal() {
       );
       return;
     }
-    Alert.alert("Tudo certo!", "Formulário válido. (sem salvar nada)");
+    Alert.alert("Tudo certo!", "Formulário válido (sem salvar ainda).");
   };
 
   return (
     <>
-      <Stack.Screen options={{ title: "Cadastro de Animal" }} />
+      <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#fff" }}
@@ -149,6 +147,11 @@ export default function FormularioAnimal() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
       >
         <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.mainTitle}>Cadastro de Animal</Text>
+          <Text style={styles.subtitle}>
+            Preencha as informações abaixo para cadastrar um novo animal.
+          </Text>
+
           {/* Dados do Animal */}
           <Section title="Dados do Animal">
             <LabeledInput
@@ -299,12 +302,11 @@ export default function FormularioAnimal() {
           {/* Salvar */}
           <TouchableOpacity
             activeOpacity={0.85}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={onSalvar}
             disabled={!obrigatoriosOk}
             style={[
               styles.saveBtn,
-              !obrigatoriosOk && { backgroundColor: "#9bbcf5" },
+              !obrigatoriosOk && { backgroundColor: "#9fd8a5" },
             ]}
           >
             <Text style={styles.saveBtnText}>
@@ -320,20 +322,39 @@ export default function FormularioAnimal() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: "#fff", gap: 16 },
+  container: {
+    padding: 20,
+    backgroundColor: "#fff",
+    gap: 20,
+    alignItems: "center" // centraliza horizontalmente todas as sections
+  },
+  mainTitle: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#00780a",
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 15,
+    color: "#555",
+    textAlign: "center",
+    marginBottom: 10,
+  },
   section: {
     borderWidth: 1,
+    width: "100%",
+    maxWidth: 800,
     borderColor: "#e6e6e6",
     borderRadius: 12,
     padding: 12,
     gap: 12,
   },
-  sectionTitle: { fontWeight: "700", fontSize: 16, color: "#0a84ff" },
+  sectionTitle: { fontWeight: "700", fontSize: 16, color: "#00780a" },
   label: { fontWeight: "600", color: "#222" },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#d5d5d5",
+    borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -342,17 +363,17 @@ const styles = StyleSheet.create({
   sexoRow: { flexDirection: "row", gap: 10 },
   sexoBtn: {
     borderWidth: 1,
-    borderColor: "#d5d5d5",
+    borderColor: "#ccc",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
   },
-  sexoBtnActive: { backgroundColor: "#0a84ff", borderColor: "#0a84ff" },
-  sexoBtnText: { color: "#0a84ff", fontWeight: "600" },
+  sexoBtnActive: { backgroundColor: "#00780a", borderColor: "#00780a" },
+  sexoBtnText: { color: "#00780a", fontWeight: "600" },
 
   addBtn: {
     alignSelf: "flex-start",
-    backgroundColor: "#0a84ff",
+    backgroundColor: "#00780a",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -378,16 +399,14 @@ const styles = StyleSheet.create({
   },
 
   saveBtn: {
-    backgroundColor: "#0a84ff",
+    backgroundColor: "#00780a",
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    width: "100%",
+    maxWidth: 800,
+    textAlign: "center"
   },
   saveBtnText: { color: "#fff", fontWeight: "800" },
 });

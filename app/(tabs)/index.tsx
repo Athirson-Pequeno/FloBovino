@@ -1,56 +1,38 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-
-type Animal = {
-  id: string;
-  nome: string;
-  idade: string;
-};
-
-const data: Animal[] = [
-  { id: "1", nome: "Raposinha", idade: "3 anos" },
-  { id: "2", nome: "Trezeana", idade: "5 anos" },
-  { id: "3", nome: "Lua nova", idade: "2 anos" },
-];
+import { Pressable, StyleSheet, Text, View, Image } from "react-native";
 
 export default function HomeScreen() {
-  const renderItem = ({ item }: { item: Animal }) => (
-    <View style={styles.item}>
-      <View style={styles.itemLeft}>
+  return (
+    <View style={styles.container}>
+      {/* Logo / Título */}
+      <View style={styles.header}>
         <Image
-          source={{
-            uri: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Cow_female_black_white.jpg",
-          }}
-          style={styles.image}
-          contentFit="cover"
+          source={require("@/assets/images/logo.png")} // Coloque sua logo aqui (ou remova essa linha)
+          style={styles.logo}
         />
-        <View>
-          <Text style={styles.name}>{item.nome}</Text>
-          <Text style={styles.age}>{item.idade}</Text>
-        </View>
+        <Text style={styles.title}>Bem-vindo ao AgroConnect</Text>
+        <Text style={styles.subtitle}>
+          Cadastre-se ou entre para continuar
+        </Text>
       </View>
 
-      <IconSymbol size={28} name="calendar" color={"#fff"} />
-    </View>
-  );
-
-  return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      {/* Lista de animais */}
-      <FlatList
-        data={data}
-        keyExtractor={(animal) => animal.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ padding: 8, gap: 8, paddingBottom: 100 }}
-      />
-
-      {/* Botão menor e centralizado */}
-      <View style={styles.footer}>
-        <Link href="/formularioAnimal" asChild>
+      {/* Botões principais */}
+      <View style={styles.buttonContainer}>
+        <Link href="../forms/formularioFazendeiro" asChild>
           <Pressable style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Abrir formulário animal</Text>
+            <Text style={styles.primaryButtonText}>Cadastrar Fazendeiro</Text>
+          </Pressable>
+        </Link>
+
+        <Link href="../forms/formularioAnimal " asChild>
+          <Pressable style={styles.primaryButton}>
+            <Text style={styles.primaryButtonText}>Cadastrar Veterinário</Text>
+          </Pressable>
+        </Link>
+
+        <Link href="../pages/login" asChild>
+          <Pressable style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>Fazer Login</Text>
           </Pressable>
         </Link>
       </View>
@@ -59,41 +41,46 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  item: {
-    padding: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderWidth: 2,
-    borderColor: "#606060ff",
-    marginHorizontal: 4,
-    borderRadius: 8,
-    justifyContent: "space-between",
-  },
-  itemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+  container: {
     flex: 1,
-  },
-  image: { width: 50, height: 50, borderRadius: 5 },
-  name: { color: "#000", fontWeight: "600" },
-  age: { color: "#000" },
-
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    paddingBottom: 12,
     backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 15,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#00780aff",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: "#555",
+    textAlign: "center",
+  },
+  buttonContainer: {
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center",
+    gap: 16,
   },
   primaryButton: {
-    backgroundColor: "#0a84ff",
-    paddingVertical: 10,
+    backgroundColor: "#00780aff",
+    paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 10,
+    width: "90%",
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
@@ -103,6 +90,20 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 15,
+    fontSize: 16,
+  },
+  secondaryButton: {
+    borderColor: "#00780aff",
+    borderWidth: 2,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    width: "90%",
+    alignItems: "center",
+  },
+  secondaryButtonText: {
+    color: "#00780aff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

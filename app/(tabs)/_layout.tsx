@@ -20,6 +20,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
+          tabBarStyle: { display: "none" },
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
@@ -40,6 +41,16 @@ export default function TabLayout() {
       {/* Oculta a aba do formulário, mas mantém a rota ativa */}
       <Tabs.Screen
         name="formularioAnimal"
+        options={{ href: null }}
+      />
+      {/* Oculta a aba do formulário, mas mantém a rota ativa */}
+      <Tabs.Screen
+        name="formularioFazendeiro"
+        options={{ href: null }}
+      />
+      {/* Oculta a aba do formulário, mas mantém a rota ativa */}
+      <Tabs.Screen
+        name="formularioVeterinario"
         options={{ href: null }}
       />
     </Tabs>
