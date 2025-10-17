@@ -24,7 +24,7 @@ export default function HomeScreen() {
           </Pressable>
         </Link>
 
-        <Link href="../forms/formularioAnimal " asChild>
+        <Link href="../forms/formularioVeterinario " asChild>
           <Pressable style={styles.primaryButton}>
             <Text style={styles.primaryButtonText}>Cadastrar Veterinário</Text>
           </Pressable>

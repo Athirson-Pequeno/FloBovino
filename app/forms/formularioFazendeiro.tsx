@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import React, { useState } from "react";
+import { salvarFazendeiro } from "../services/fazendeiroService";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,7 +15,6 @@ import {
 
 export default function FormularioFazendeiro() {
   const [fazendeiro, setFazendeiro] = useState({
-    codigo: "",
     nome: "",
     email: "",
     endereco: {
@@ -39,13 +39,16 @@ export default function FormularioFazendeiro() {
     }
   };
 
-  const handleSubmit = () => {
-    Alert.alert("Sucesso", "Fazendeiro cadastrado com sucesso!");
-    console.log("Dados do Fazendeiro:", fazendeiro);
+  const handleSubmit = async () => {
+    try {
+      await salvarFazendeiro(fazendeiro);
+      Alert.alert('Sucesso', 'Fazendeiro cadastrado com sucesso!');
+    } catch (err) {
+      Alert.alert('Erro', 'Não foi possível salvar o fazendeiro.' + err);
+    }
 
     // Limpar os campos
     setFazendeiro({
-      codigo: "",
       nome: "",
       email: "",
       endereco: {

@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import React, { useState } from "react";
+import { salvarVeterinario } from "../services/veterinarioService";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -40,9 +41,13 @@ export default function VeterinarioForm() {
     }
   };
 
-  const handleSubmit = () => {
-    Alert.alert("Sucesso", "Veterinário cadastrado com sucesso!");
-    console.log("Dados do veterinário:", veterinario);
+  const handleSubmit = async () => {
+    try {
+      await salvarVeterinario(veterinario);
+      Alert.alert('Sucesso', 'Veterinário cadastrado com sucesso!');
+    } catch (err) {
+      Alert.alert('Erro', 'Não foi possível salvar o veterinário.' + err);
+    } 
 
     // Limpar os campos
     setVeterinario({
