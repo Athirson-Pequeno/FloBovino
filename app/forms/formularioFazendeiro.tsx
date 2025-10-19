@@ -1,22 +1,23 @@
 import { Stack } from "expo-router";
 import React, { useState } from "react";
-import { salvarFazendeiro } from "../services/fazendeiroService";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Pressable,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
+import { salvarFazendeiro } from "../../services/fazendeiroService";
 
 export default function FormularioFazendeiro() {
   const [fazendeiro, setFazendeiro] = useState({
     nome: "",
     email: "",
+    senha: "",
     endereco: {
       numero: "",
       bairro: "",
@@ -51,6 +52,7 @@ export default function FormularioFazendeiro() {
     setFazendeiro({
       nome: "",
       email: "",
+      senha: "",
       endereco: {
         numero: "",
         bairro: "",
@@ -91,6 +93,14 @@ export default function FormularioFazendeiro() {
             onChangeText={(text) => handleChange("email", text)}
             placeholder="E-mail *"
             keyboardType="email-address"
+          />
+
+          <TextInput
+            style={styles.input}
+            value={fazendeiro.senha}
+            onChangeText={(text) => handleChange("senha", text)}
+            placeholder="Senha *"
+            secureTextEntry
           />
 
           {/* Endereço */}

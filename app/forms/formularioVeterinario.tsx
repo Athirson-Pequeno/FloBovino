@@ -1,17 +1,17 @@
 import { Stack } from "expo-router";
 import React, { useState } from "react";
-import { salvarVeterinario } from "../services/veterinarioService";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Pressable,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
+import { salvarVeterinario } from "../../services/veterinarioService";
 
 export default function VeterinarioForm() {
   const [veterinario, setVeterinario] = useState({

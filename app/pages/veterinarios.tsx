@@ -1,8 +1,8 @@
 // app/fazendeiros.tsx
 import { Stack } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, View, ActivityIndicator } from "react-native";
-import { supabase } from "../config/supabase_config";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { supabase } from "../../config/supabase_config";
 
 export type Veterinario = {
   id: string;

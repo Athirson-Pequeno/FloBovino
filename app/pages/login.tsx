@@ -1,11 +1,50 @@
-import { Link, Stack } from "expo-router";
-import { Pressable, StyleSheet, Text, View, TextInput } from "react-native";
+// app/login.tsx
+import { Stack, useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
+import { supabase } from "../../config/supabase_config";
 
 export default function LoginScreen() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Erro", "Preencha email e senha.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      Alert.alert("Sucesso", `Bem-vindo(a), ${data.user?.email}!`);
+      router.replace("./home");
+    } catch (err: any) {
+      Alert.alert("Falha no login", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
-    <Stack.Screen options={{ headerShown: false }} />
-      {/* Cabeçalho */}
+      <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.header}>
         <Text style={styles.title}>Login</Text>
         <Text style={styles.subtitle}>
@@ -13,36 +52,37 @@ export default function LoginScreen() {
         </Text>
       </View>
 
-      {/* Campos de entrada */}
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
           placeholder="E-mail"
           keyboardType="email-address"
           autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
         />
-
         <TextInput
           style={styles.input}
           placeholder="Senha"
           secureTextEntry
+          value={password}
+          onChangeText={setPassword}
         />
 
-        <Link href="./home" asChild>
-          <Pressable style={styles.loginButton}>
+        <Pressable style={styles.loginButton} onPress={handleLogin}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
             <Text style={styles.loginButtonText}>Entrar</Text>
-          </Pressable>
-        </Link>
+          )}
+        </Pressable>
       </View>
 
-      {/* Rodapé opcional */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>Ainda não tem conta?</Text>
-        <Link href="../forms/formularioFazendeiro" asChild>
-          <Pressable>
-            <Text style={styles.linkText}>Cadastre-se aqui</Text>
-          </Pressable>
-        </Link>
+        <Pressable onPress={() => router.push("/forms/formularioFazendeiro")}>
+          <Text style={styles.linkText}>Cadastre-se aqui</Text>
+        </Pressable>
       </View>
     </View>
   );

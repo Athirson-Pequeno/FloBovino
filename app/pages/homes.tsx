@@ -49,7 +49,7 @@ export default function HomeScreen() {
 
       {/* Cadastrar novo animal */}
       <View style={styles.footer}>
-        <Link href="../forms/formularioAnimal" asChild>
+        <Link href="/forms/formularioAnimal" asChild>
           <Pressable style={styles.primaryButton}>
             <Text style={styles.primaryButtonText}>Abrir formulário animal</Text>
           </Pressable>
