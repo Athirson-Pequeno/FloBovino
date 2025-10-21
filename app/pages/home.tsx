@@ -1,21 +1,45 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
 import { Link, Stack } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
+import { listarAnimaisDoUsuario } from "../../services/animalService";
 
 type Animal = {
   id: string;
   nome: string;
-  idade: string;
+  raca: string;
+  sexo: "M" | "F";
+  data_nascimento: string;
+  vacinas?: { tipo: string; data_aplicacao: string }[];
 };
 
-const data: Animal[] = [
-  { id: "1", nome: "Raposinha", idade: "3 anos" },
-  { id: "2", nome: "Trezeana", idade: "5 anos" },
-  { id: "3", nome: "Lua nova", idade: "2 anos" },
-];
-
 export default function HomeScreen() {
+  const [animais, setAnimais] = useState<Animal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function carregarAnimais() {
+      try {
+        const dados = await listarAnimaisDoUsuario();
+        setAnimais(dados || []);
+      } catch (err) {
+        console.error("Erro ao carregar animais:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    carregarAnimais();
+  }, []);
+
   const renderItem = ({ item }: { item: Animal }) => (
     <View style={styles.item}>
       <View style={styles.itemLeft}>
@@ -28,7 +52,9 @@ export default function HomeScreen() {
         />
         <View>
           <Text style={styles.name}>{item.nome}</Text>
-          <Text style={styles.age}>{item.idade}</Text>
+          <Text style={styles.age}>
+            {item.raca} - {item.sexo === "M" ? "Macho" : "Fêmea"}
+          </Text>
         </View>
       </View>
 
@@ -36,18 +62,31 @@ export default function HomeScreen() {
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00780a" />
+        <Text style={{ marginTop: 10 }}>Carregando animais...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Stack.Screen options={{ headerShown: false }} />
-      {/* Lista de animais */}
+
       <FlatList
-        data={data}
+        data={animais}
         keyExtractor={(animal) => animal.id}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 8, gap: 8, paddingBottom: 100 }}
+        ListEmptyComponent={
+          <Text style={{ textAlign: "center", marginTop: 20, color: "#555" }}>
+            Nenhum animal cadastrado ainda.
+          </Text>
+        }
       />
 
-      {/* Cadastrar novo animal */}
       <View style={styles.footer}>
         <Link href="/forms/formularioAnimal" asChild>
           <Pressable style={styles.primaryButton}>
@@ -80,7 +119,6 @@ const styles = StyleSheet.create({
   image: { width: 50, height: 50, borderRadius: 5 },
   name: { color: "#000", fontWeight: "600" },
   age: { color: "#000" },
-
   footer: {
     position: "absolute",
     bottom: 0,
@@ -105,5 +143,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 15,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

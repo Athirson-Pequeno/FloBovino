@@ -7,7 +7,7 @@ export default function HomeScreen() {
       {/* Logo / Título */}
       <View style={styles.header}>
         <Image
-          source={require("@/assets/images/logo.png")} // Coloque sua logo aqui (ou remova essa linha)
+          source={require("@/assets/images/logo.png")} 
           style={styles.logo}
         />
         <Text style={styles.title}>Bem-vindo ao AgroConnect</Text>
