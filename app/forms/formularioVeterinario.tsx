@@ -1,15 +1,15 @@
 import { Stack } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { salvarVeterinario } from "../../services/veterinarioService";
 
@@ -18,6 +18,7 @@ export default function VeterinarioForm() {
     crmv: "",
     nome: "",
     email: "",
+    senha: "",
     telefone: "",
     endereco: {
       numero: "",
@@ -47,13 +48,14 @@ export default function VeterinarioForm() {
       Alert.alert('Sucesso', 'Veterinário cadastrado com sucesso!');
     } catch (err) {
       Alert.alert('Erro', 'Não foi possível salvar o veterinário.' + err);
-    } 
+    }
 
     // Limpar os campos
     setVeterinario({
       crmv: "",
       nome: "",
       email: "",
+      senha: "",
       telefone: "",
       endereco: {
         numero: "",
@@ -98,6 +100,14 @@ export default function VeterinarioForm() {
 
           <TextInput
             style={styles.input}
+            value={veterinario.telefone}
+            onChangeText={(text) => handleChange("telefone", text)}
+            placeholder="Telefone *"
+            keyboardType="phone-pad"
+          />
+
+          <TextInput
+            style={styles.input}
             value={veterinario.email}
             onChangeText={(text) => handleChange("email", text)}
             placeholder="E-mail *"
@@ -106,10 +116,10 @@ export default function VeterinarioForm() {
 
           <TextInput
             style={styles.input}
-            value={veterinario.telefone}
-            onChangeText={(text) => handleChange("telefone", text)}
-            placeholder="Telefone *"
-            keyboardType="phone-pad"
+            value={veterinario.senha}
+            onChangeText={(text) => handleChange("senha", text)}
+            placeholder="Senha *"
+            secureTextEntry
           />
 
           {/* Endereço */}
