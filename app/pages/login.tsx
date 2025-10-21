@@ -1,15 +1,14 @@
-// app/login.tsx
-import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
+import { Stack, useRouter } from "expo-router";
 import { supabase } from "../../config/supabase_config";
 
 export default function LoginScreen() {
@@ -19,24 +18,34 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Erro", "Preencha email e senha.");
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Erro", "Preencha todos os campos antes de continuar.");
       return;
     }
 
     try {
       setLoading(true);
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim(),
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("E-mail ou senha incorretos.");
+        }
+        throw error;
+      }
 
-      Alert.alert("Sucesso", `Bem-vindo(a), ${data.user?.email}!`);
-      router.replace("./home");
+      if (!data.user) {
+        throw new Error("Erro inesperado: usuário não encontrado.");
+      }
+
+      Alert.alert("Bem-vindo(a)!", `Login realizado com sucesso.`);
+      router.replace("/pages/home"); // Caminho ajustado para sua estrutura
     } catch (err: any) {
-      Alert.alert("Falha no login", err.message);
+      Alert.alert("Falha no login", err.message || "Erro desconhecido.");
     } finally {
       setLoading(false);
     }
@@ -45,31 +54,39 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
+
       <View style={styles.header}>
-        <Text style={styles.title}>Login</Text>
-        <Text style={styles.subtitle}>
-          Digite seu e-mail e senha para continuar
-        </Text>
+        <Text style={styles.title}>Bem-vindo(a)</Text>
+        <Text style={styles.subtitle}>Entre com seu e-mail e senha</Text>
       </View>
 
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
           placeholder="E-mail"
+          placeholderTextColor="#888"
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
           value={email}
           onChangeText={setEmail}
         />
+
         <TextInput
           style={styles.input}
           placeholder="Senha"
+          placeholderTextColor="#888"
           secureTextEntry
+          autoCapitalize="none"
           value={password}
           onChangeText={setPassword}
         />
 
-        <Pressable style={styles.loginButton} onPress={handleLogin}>
+        <Pressable
+          style={[styles.loginButton, loading && { opacity: 0.6 }]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
@@ -87,6 +104,7 @@ export default function LoginScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -126,6 +144,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 16,
     backgroundColor: "#f9f9f9",
+    color: "#000",
   },
   loginButton: {
     backgroundColor: "#00780a",
