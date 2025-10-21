@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase_config';
+import { supabase } from "../config/supabase_config";
 
 export async function login(email: string, senha: string) {
   try {
@@ -8,20 +8,43 @@ export async function login(email: string, senha: string) {
     });
 
     if (error) {
-      if (error.message.toLowerCase().includes('invalid login credentials')) {
-        throw new Error('E-mail ou senha incorretos.');
+      // Mensagem amigável para usuário
+      if (error.message.toLowerCase().includes("invalid login credentials")) {
+        throw new Error("E-mail ou senha incorretos.");
       }
       throw error;
     }
 
-    // Retorna a sessão (token + usuário)
+    if (!data.session) {
+      throw new Error("Erro inesperado: sessão não encontrada.");
+    }
+
+    // Retorna a sessão completa (user + access token)
     return data.session;
   } catch (err: any) {
-    console.error('Erro ao fazer login:', err.message);
+    console.error("Erro ao fazer login:", err.message || err);
     throw err;
   }
 }
 
 export async function logout() {
-  await supabase.auth.signOut();
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  } catch (err: any) {
+    console.error("Erro ao fazer logout:", err.message || err);
+    throw err;
+  }
+}
+
+
+export async function getCurrentSession() {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data.session;
+  } catch (err: any) {
+    console.error("Erro ao obter sessão atual:", err.message || err);
+    return null;
+  }
 }

@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
-import { supabase } from "../../config/supabase_config";
+import { login } from "@/services/authService";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -18,38 +18,22 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("Erro", "Preencha todos os campos antes de continuar.");
-      return;
-    }
+  if (!email || !password) {
+    Alert.alert("Erro", "Preencha email e senha.");
+    return;
+  }
 
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
-      });
-
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          throw new Error("E-mail ou senha incorretos.");
-        }
-        throw error;
-      }
-
-      if (!data.user) {
-        throw new Error("Erro inesperado: usuário não encontrado.");
-      }
-
-      Alert.alert("Bem-vindo(a)!", `Login realizado com sucesso.`);
-      router.replace("/pages/home"); // Caminho ajustado para sua estrutura
-    } catch (err: any) {
-      Alert.alert("Falha no login", err.message || "Erro desconhecido.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const session = await login(email, password);
+    Alert.alert("Sucesso", `Bem-vindo(a), ${session.user.email}!`);
+    router.replace("/pages/home");
+  } catch (err: any) {
+    Alert.alert("Falha no login", err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <View style={styles.container}>
