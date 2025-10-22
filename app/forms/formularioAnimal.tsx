@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -15,22 +16,25 @@ import {
 } from "react-native";
 
 import DateTimePicker, {
-  DateTimePickerAndroid,
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 
-import { Animal, salvarAnimal, Vacina } from "../../services/animalService";
+import { Calendar, LocaleConfig } from "react-native-calendars";
 
-// ---- Somente Web: locale + CSS do react-datepicker ----
-let ReactDatePicker: any, registerLocale: any, ptBR: any;
-if (Platform.OS === "web") {
-  ReactDatePicker = require("react-datepicker").default;
-  registerLocale = require("react-datepicker").registerLocale;
-  ptBR = require("date-fns/locale/pt-BR").default;
-  registerLocale("pt-BR", ptBR);
-  // importa CSS só no Web (evita erro no nativo)
-  require("react-datepicker/dist/react-datepicker.css");
-}
+// Locale PT-BR para o calendário (Android)
+LocaleConfig.locales["pt-br"] = {
+  monthNames: [
+    "janeiro","fevereiro","março","abril","maio","junho",
+    "julho","agosto","setembro","outubro","novembro","dezembro",
+  ],
+  monthNamesShort: ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"],
+  dayNames: ["domingo","segunda","terça","quarta","quinta","sexta","sábado"],
+  dayNamesShort: ["dom","seg","ter","qua","qui","sex","sáb"],
+  today: "Hoje",
+};
+LocaleConfig.defaultLocale = "pt-br";
+
+import { Animal, salvarAnimal, Vacina } from "../../services/animalService";
 
 /* ===================== Helpers de Data ===================== */
 function pad(n: number) {
@@ -54,15 +58,6 @@ function brToISO(s: string) {
   const d = parseBR(s);
   return d ? toISODate(d) : "";
 }
-function isoToBR(s: string) {
-  if (!s) return "";
-  const [y, m, d] = s.split("-").map(Number);
-  if (!y || !m || !d) return "";
-  return `${pad(d)}/${pad(m)}/${y}`;
-}
-
-
-// Limita a data dentro de min/max (se forem passadas)
 function clampByBounds(
   d: Date,
   { minDate, maxDate }: { minDate?: Date; maxDate?: Date }
@@ -81,24 +76,20 @@ function DatePickerField({
   minDate,
 }: {
   label: string;
-  value: string; // dd/mm/aaaa
+  value: string;        // dd/mm/aaaa
   onChange: (s: string) => void;
   maxDate?: Date;
   minDate?: Date;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);              // iOS modal
+  const [androidOpen, setAndroidOpen] = useState(false); // Android modal
+  const current = parseBR(value) ?? new Date();
 
-  // ===== WEB: corrige "reset" ao digitar e ajusta layout =====
+  // ======== WEB: input mascarado simples ========
   if (Platform.OS === "web") {
-    // estado local em ISO (yyyy-mm-dd) para não sobrescrever enquanto digita
     const [webText, setWebText] = useState<string>(value || "");
+    React.useEffect(() => setWebText(value || ""), [value]);
 
-    // mantém o input sincronizado quando o valor externo mudar (ex.: limpar form)
-    React.useEffect(() => {
-      setWebText(value || "");
-    }, [value]);
-
-    // aplica máscara dd/mm/aaaa
     const mask = (raw: string) => {
       const digits = raw.replace(/\D/g, "").slice(0, 8);
       let out = digits;
@@ -110,8 +101,6 @@ function DatePickerField({
     const handleWebChange = (e: any) => {
       const next = mask(e.target.value as string);
       setWebText(next);
-
-      // só propaga quando completo (10 chars) e válido
       if (next.length === 10) {
         const d = parseBR(next);
         if (d) {
@@ -121,13 +110,12 @@ function DatePickerField({
           onChange(finalStr);
         }
       }
-    }
+    };
 
-    // @ts-ignore: elemento DOM está disponível apenas no web
+    // @ts-ignore (DOM web)
     return (
       <View style={{ gap: 6 }}>
         <Text style={styles.label}>{label}</Text>
-        {/* eslint-disable-next-line react-native/no-inline-styles */}
         <input
           type="text"
           inputMode="numeric"
@@ -135,7 +123,6 @@ function DatePickerField({
           value={webText}
           onChange={handleWebChange}
           onBlur={() => {
-            // se saiu do campo sem completar, não sobrescreve o form
             if (webText.length === 10) {
               const d = parseBR(webText);
               if (d) {
@@ -147,9 +134,9 @@ function DatePickerField({
             }
           }}
           style={{
-            width: "100%",              // ocupa o card todo
+            width: "100%",
             display: "block",
-            boxSizing: "border-box",    // respeita padding/borda
+            boxSizing: "border-box",
             background: "#f9f9f9",
             border: "1px solid #ccc",
             borderRadius: 10,
@@ -157,37 +144,22 @@ function DatePickerField({
             height: 44,
             outline: "none",
           }}
-          
         />
       </View>
     );
   }
 
-  // NATIVO (Android/iOS)
-  const current = parseBR(value) ?? new Date();
+  // ======== MOBILE (Android / iOS) ========
+  const [tempDate, setTempDate] = useState<Date>(current);
 
-  // Android: abre modal nativo
-  const openAndroid = () => {
-  DateTimePickerAndroid.open({
-    value: current,
-    mode: "date",
-    onChange: (_: DateTimePickerEvent, selected?: Date) => {
-      if (selected) {
-        const clamped = clampByBounds(selected, { minDate, maxDate });
-        onChange(formatBR(clamped));
-      }
-    },
-    maximumDate: maxDate,
-    minimumDate: minDate,
-  });
-};
-
-  // iOS: spinner inline
-  const onChangeIOS = (_: DateTimePickerEvent, selected?: Date) => {
-    if (selected) {
-    const clamped = clampByBounds(selected, { minDate, maxDate });
+  const openIOS = () => {
+    setTempDate(parseBR(value) ?? new Date());
+    setOpen(true);
+  };
+  const confirmIOS = () => {
+    const clamped = clampByBounds(tempDate, { minDate, maxDate });
     onChange(formatBR(clamped));
-  }
+    setOpen(false);
   };
 
   return (
@@ -196,7 +168,7 @@ function DatePickerField({
 
       <Pressable
         onPress={() =>
-          Platform.OS === "android" ? openAndroid() : setOpen((s) => !s)
+          Platform.OS === "android" ? setAndroidOpen(true) : openIOS()
         }
       >
         <TextInput
@@ -204,25 +176,152 @@ function DatePickerField({
           placeholder="dd/mm/aaaa"
           editable={false}
           pointerEvents="none"
-          style={styles.input}  // mantém dentro do card
+          style={styles.input}
         />
       </Pressable>
 
-      {open && Platform.OS === "ios" && (
-        <DateTimePicker
-          value={current}
-          mode="date"
-          display="spinner"
-          locale="pt-BR"
-          onChange={onChangeIOS}
-          maximumDate={maxDate}
-          minimumDate={minDate}
-          style={{ alignSelf: "flex-start" }}
-        />
+      {/* ANDROID: Modal + Calendar (verde) */}
+      {Platform.OS === "android" && (
+        <Modal
+          transparent
+          visible={androidOpen}
+          animationType="fade"
+          onRequestClose={() => setAndroidOpen(false)}
+        >
+          <View style={androidStyles.backdrop}>
+            <View style={androidStyles.sheet}>
+              <Calendar
+                initialDate={brToISO(value) || toISODate(new Date())}
+                minDate={minDate ? toISODate(minDate) : undefined}
+                maxDate={maxDate ? toISODate(maxDate) : undefined}
+                onDayPress={(day) => {
+                  const d = new Date(day.dateString);
+                  const clamped = clampByBounds(d, { minDate, maxDate });
+                  onChange(formatBR(clamped));
+                  setAndroidOpen(false);
+                }}
+                markedDates={
+                  value
+                    ? { [brToISO(value)]: { selected: true, selectedColor: "#00780a" } }
+                    : undefined
+                }
+                theme={{
+                  calendarBackground: "#fff",
+                  monthTextColor: "#00780a",
+                  selectedDayBackgroundColor: "#00780a",
+                  selectedDayTextColor: "#fff",
+                  todayTextColor: "#00780a",
+                  arrowColor: "#00780a",
+                  textSectionTitleColor: "#555",
+                }}
+              />
+              <View style={androidStyles.actions}>
+                <TouchableOpacity onPress={() => setAndroidOpen(false)}>
+                  <Text style={androidStyles.actionText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* iOS: Modal + DateTimePicker nativo */}
+      {Platform.OS === "ios" && (
+        <Modal
+          visible={open}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setOpen(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.35)",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 20,
+            }}
+          >
+            <View
+              style={{
+                width: "100%",
+                maxWidth: 360,
+                backgroundColor: "#fff",
+                borderRadius: 12,
+                padding: 12,
+              }}
+            >
+              <DateTimePicker
+                value={tempDate}
+                mode="date"
+                display={
+                  (() => {
+                    const v = parseFloat(String(Platform.Version));
+                    return isNaN(v) || v < 14 ? "spinner" : "inline";
+                  })()
+                }
+                locale="pt-BR"
+                onChange={(_: DateTimePickerEvent, selected?: Date) => {
+                  if (selected) setTempDate(selected);
+                }}
+                maximumDate={maxDate}
+                minimumDate={minDate}
+                style={{ width: "100%", backgroundColor: "#fff" }}
+                themeVariant="light"
+                accentColor="#00780a"
+              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-end",
+                  gap: 12,
+                  marginTop: 8,
+                }}
+              >
+                <TouchableOpacity onPress={() => setOpen(false)}>
+                  <Text style={{ color: "#555", fontWeight: "600" }}>
+                    Cancelar
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={confirmIOS}>
+                  <Text style={{ color: "#00780a", fontWeight: "700" }}>
+                    OK
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       )}
     </View>
   );
 }
+
+/* ===================== Estilos Android Modal ===================== */
+const androidStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  sheet: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 14,
+    backgroundColor: "#fff",
+    overflow: "hidden",
+  },
+  actions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+    paddingTop: 8,
+  },
+  actionText: { color: "#00780a", fontWeight: "700" },
+});
 
 /* ===================== Tipagem do Form ===================== */
 type AnimalForm = {
@@ -419,7 +518,7 @@ export default function FormularioAnimal() {
               </View>
             </View>
 
-            {/* Data de Nascimento com calendário */}
+            {/* Data de Nascimento */}
             <DatePickerField
               label="Data de Nascimento *"
               value={form.dataNascimento}
