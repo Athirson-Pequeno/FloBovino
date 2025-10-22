@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase_config';
+import { supabase } from "../config/supabase_config";
 
 export type Veterinario = {
   crmv: string;
@@ -16,42 +16,96 @@ export type Veterinario = {
   };
 };
 
+export async function buscarVeterinarios() {
+  const { data, error } = await supabase
+    .from("veterinarios")
+    .select(`
+          id,
+          crmv,
+          numero,
+          bairro,
+          cep,
+          cidade,
+          estado,
+          complemento,
+          usuarios!veterinarios_id_fkey (
+            nome,
+            email
+          )
+        `)
+    .order("usuarios(nome)", { ascending: true });
+
+  if (error) throw error;
+
+
+  const normalizado = data.map((v: any) => ({
+    ...v,
+    usuarios: v.usuarios?.[0] || v.usuarios || {},
+  }));
+
+  return normalizado;
+}
+
+export async function atribuirVeterinarioAoFazendeiro(veterinario: any) {
+
+  const user = await supabase.auth.getUser();
+
+  const veterinarioId = veterinario.id;
+  const fazendeiroId = user.data.user?.id;
+
+  if (!veterinarioId) {
+    throw new Error("ID do veterinário não fornecido.");
+  }
+
+  if (!user.data.user) {
+    throw new Error("Usuário não logado.");
+  }
+
+  const { error } = await supabase
+    .from("veterinario_fazendeiros")
+    .insert({ veterinario_id: veterinarioId, fazendeiro_id: fazendeiroId });
+
+  if (error) {
+    console.error("Erro ao atribuir veterinário ao fazendeiro:", error);
+    throw error;
+  }
+}
+
 export async function salvarVeterinario(veterinario: Veterinario) {
   try {
-    // Criar usuário no Supabase Auth
+    // 1️⃣ Cria usuário no Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: veterinario.email,
       password: veterinario.senha,
     });
 
-    // Trata o caso de e-mail já existente
     if (authError) {
       if (
-        authError.message?.toLowerCase().includes('user already registered') ||
-        authError.message?.toLowerCase().includes('already registered')
+        authError.message?.toLowerCase().includes("user already registered") ||
+        authError.message?.toLowerCase().includes("already registered")
       ) {
-        throw new Error('Já existe um usuário cadastrado com este e-mail.');
+        throw new Error(authError.message);
       }
       throw authError;
     }
 
     const userId = authData.user?.id;
-    if (!userId) throw new Error('Usuário não retornado pelo Supabase Auth.');
+    if (!userId) throw new Error("Usuário não retornado pelo Supabase Auth.");
 
-    // Atualizar perfil base
+    // 2️⃣ Atualiza o registro do usuário criado automaticamente pelo trigger
     const { error: updateError } = await supabase
-      .from('usuarios')
+      .from("usuarios")
       .update({
         nome: veterinario.nome,
-        tipo: 'veterinario',
+        tipo: "veterinario",
         email: veterinario.email,
       })
-      .eq('id', userId);
+      .eq("id", userId);
 
     if (updateError) throw updateError;
 
-    //Inserir dados adicionais
-    const { error } = await supabase.from('veterinarios').insert([
+    // 3️⃣ Cria o registro na tabela veterinarios (agora com FK válida)
+    const { error: insertError } = await supabase.from("veterinarios").insert([
       {
         id: userId,
         crmv: veterinario.crmv,
@@ -65,10 +119,54 @@ export async function salvarVeterinario(veterinario: Veterinario) {
       },
     ]);
 
-    if (error) throw error;
+    if (insertError) throw insertError;
+
     return { success: true, userId };
   } catch (err: any) {
-    console.error('Erro ao salvar veterinário:', err.message);
+    console.error("Erro ao salvar veterinário:", err.message);
     throw err;
+  }
+
+
+
+}
+
+export async function listarClientesDoVeterinario(veterinarioId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("veterinario_fazendeiros")
+      .select(`
+        fazendeiros(
+          id,
+          cidade,
+          usuarios!fazendeiros_id_fkey (
+            nome,
+            email
+          )
+        )
+      `)
+      .eq("veterinario_id", veterinarioId);
+
+    if (error) throw error;
+
+    const normalizado = (data || []).map((item: any) => {
+      const fazendeiro = item.fazendeiros;
+      // Aqui garantimos que `usuarios` seja sempre um objeto único
+      const usuarioObj = Array.isArray(fazendeiro.usuarios)
+        ? fazendeiro.usuarios[0] || {}
+        : fazendeiro.usuarios || {};
+
+      return {
+        id: fazendeiro.id,
+        cidade: fazendeiro.cidade,
+        usuarios: usuarioObj,
+      };
+    });
+
+
+    return normalizado;
+  } catch (error) {
+    console.error("Erro ao listar clientes:", error);
+    return [];
   }
 }
