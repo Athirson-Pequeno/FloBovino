@@ -11,6 +11,8 @@ import {
   View,
 } from "react-native";
 
+import EventosModal from "@/components/eventosModal";
+
 import { supabase } from "@/config/supabase_config";
 import { listarAnimaisDoUsuario } from "@/services/animalService";
 import { listarClientesDoVeterinario } from "@/services/veterinarioService";
@@ -48,6 +50,15 @@ export default function HomeScreen() {
   const [dados, setDados] = useState<TipoDado[]>([]);
   const [loading, setLoading] = useState(true);
   const [tipoUsuario, setTipoUsuario] = useState<Usuario["tipo"] | null>(null);
+
+  const [animalSelecionado, setAnimalSelecionado] = useState<Animal | null>(null);
+  const [mostrarModal, setMostrarModal] = useState(false);
+
+  function abrirModal(animal: Animal) {
+    setAnimalSelecionado(animal);
+    setMostrarModal(true);
+  }
+
 
   useEffect(() => {
     async function carregarDados() {
@@ -91,47 +102,22 @@ export default function HomeScreen() {
       return (
         <View style={styles.item}>
           {/* Card do animal -> leva para eventos */}
-          <Link
-            href={{ pathname: "/pages/eventos", params: { animalId: animal.id } }}
-            asChild
-          >
-            <Pressable style={styles.itemLeft}>
-              <Image
-                source={{
-                  uri: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Cow_female_black_white.jpg",
-                }}
-                style={styles.image}
-                contentFit="cover"
-              />
-              <View>
-                <Text style={styles.name}>{animal.nome}</Text>
-                <Text style={styles.age}>
-                  {animal.raca} - {animal.sexo === "M" ? "Macho" : "Fêmea"}
-                </Text>
-              </View>
-            </Pressable>
-          </Link>
 
-          {/* Botões de ação */}
-          <View style={styles.actions}>
-            <Link
-              href={{ pathname: "/pages/eventos", params: { animalId: animal.id } }}
-              asChild
-            >
-              <Pressable style={{ ...styles.actionBtn, backgroundColor: "#1e90ff" }}>
-                <Text style={styles.actionText}>Eventos</Text>
-              </Pressable>
-            </Link>
-
-            <Link
-              href={{ pathname: "/forms/formularioAnimal", params: { id: animal.id } }}
-              asChild
-            >
-              <Pressable style={{ ...styles.actionBtn, backgroundColor: "#10b981" }}>
-                <Text style={styles.actionText}>Editar</Text>
-              </Pressable>
-            </Link>
-          </View>
+          <Pressable style={styles.itemLeft} onPress={() => abrirModal(animal)}>
+            <Image
+              source={{
+                uri: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Cow_female_black_white.jpg",
+              }}
+              style={styles.image}
+              contentFit="cover"
+            />
+            <View>
+              <Text style={styles.name}>{animal.nome}</Text>
+              <Text style={styles.age}>
+                {animal.raca} - {animal.sexo === "M" ? "Macho" : "Fêmea"}
+              </Text>
+            </View>
+          </Pressable>
         </View>
       );
     } else if (tipoUsuario === "veterinario") {
@@ -174,6 +160,15 @@ export default function HomeScreen() {
           </Text>
         }
       />
+
+      {animalSelecionado && (
+        <EventosModal
+          visible={mostrarModal}
+          animalId={animalSelecionado.id}
+          onClose={() => setMostrarModal(false)}
+        />
+      )}
+
 
       <View style={styles.footer}>
         {tipoUsuario === "fazendeiro" && (

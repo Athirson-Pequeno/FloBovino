@@ -3,24 +3,24 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
-    Alert,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 // ✅ imports RELATIVOS
 import {
-    atualizarEvento,
-    criarEvento,
-    excluirEvento,
-    obterEvento,
-    type AnimalEvent,
-    type EventType,
+  atualizarEvento,
+  criarEvento,
+  excluirEvento,
+  obterEvento,
+  type AnimalEvent,
+  type EventType,
 } from "../../services/eventoService";
 import { criarVacina } from "../../services/vacinaService";
 
@@ -118,6 +118,8 @@ export default function FormularioEvento() {
   const [vacinaNome, setVacinaNome] = React.useState("");
   const [vacinaLote, setVacinaLote] = React.useState("");
   const [vacinaValidade, setVacinaValidade] = React.useState<string>("");
+
+  const [mostrarValidade, setMostrarValidade] = React.useState(false);
 
   // Preload quando editar
   React.useEffect(() => {
@@ -270,14 +272,27 @@ export default function FormularioEvento() {
             />
 
             <Text style={styles.label}>Validade (opcional)</Text>
-            {/* Pode ser outro ISODateField; aqui uso o nativo pra ser rápido */}
-            <DateTimePicker
-              value={vacinaValidade ? (parseISO(vacinaValidade) ?? new Date()) : new Date()}
-              mode="date"
-              display={Platform.OS === "ios" ? "inline" : "default"}
-              onChange={(_, d) => d && setVacinaValidade(toISO(d))}
-            />
-            {vacinaValidade ? <Text>Validade: {vacinaValidade}</Text> : null}
+            <Pressable onPress={() => setMostrarValidade(true)}>
+              <TextInput
+                style={styles.input}
+                editable={false}
+                placeholder="Selecione a validade"
+                value={vacinaValidade}
+              />
+            </Pressable>
+
+            {mostrarValidade && (
+              <DateTimePicker
+                mode="date"
+                value={vacinaValidade ? (parseISO(vacinaValidade) ?? new Date()) : new Date()}
+                display={Platform.OS === "ios" ? "inline" : "default"}
+                onChange={(_, d) => {
+                  setMostrarValidade(false);
+                  if (d) setVacinaValidade(toISO(d));
+                }}
+              />
+            )}
+
           </View>
         )}
 

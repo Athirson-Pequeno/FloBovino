@@ -9,7 +9,6 @@ import {
     View,
 } from "react-native";
 
-// ❗️IMPORT RELATIVO (ajuste se sua pasta for diferente)
 import {
     listarEventosPorAnimal,
     type AnimalEvent,

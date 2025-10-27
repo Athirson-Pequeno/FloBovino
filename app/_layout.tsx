@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -13,12 +14,13 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="pages/login" />
-        <Stack.Screen name="pages/homes" />
+        <Stack.Screen name="pages/home" />
         <Stack.Screen name="pages/loginFazendeiro" />
         <Stack.Screen name="forms/formularioAnimal" />
         <Stack.Screen name="forms/formularioFazendeiro" />
@@ -28,5 +30,6 @@ export default function RootLayout() {
         <Stack.Screen name="pages/dashboardFazendeiro" />
       </Stack>
     </ThemeProvider>
+    </SafeAreaView>
   );
 }
