@@ -1,8 +1,7 @@
 // app/home.tsx
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
 import { Link, Stack } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -15,8 +14,6 @@ import {
 import { supabase } from "@/config/supabase_config";
 import { listarAnimaisDoUsuario } from "@/services/animalService";
 import { listarClientesDoVeterinario } from "@/services/veterinarioService";
-
-
 
 type Usuario = {
   id: string;
@@ -35,10 +32,9 @@ type Animal = {
 };
 
 export type UsuarioDados = {
-    nome: string;
-    email: string;
+  nome: string;
+  email: string;
 };
-
 
 type Cliente = {
   id: string;
@@ -58,12 +54,10 @@ export default function HomeScreen() {
       try {
         setLoading(true);
 
-        // pegar usuário logado
         const { data: userRes, error: userError } = await supabase.auth.getUser();
         if (userError) throw userError;
         if (!userRes.user) return;
 
-        // buscar perfil do usuário
         const { data: perfilData, error: perfilError } = await supabase
           .from("usuarios")
           .select("id, nome, email, tipo")
@@ -93,25 +87,51 @@ export default function HomeScreen() {
   const renderItem = ({ item }: { item: TipoDado }) => {
     if (tipoUsuario === "fazendeiro") {
       const animal = item as Animal;
+
       return (
         <View style={styles.item}>
-          <View style={styles.itemLeft}>
-            <Image
-              source={{
-                uri: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Cow_female_black_white.jpg",
-              }}
-              style={styles.image}
-              contentFit="cover"
-            />
-            <View>
-              <Text style={styles.name}>{animal.nome}</Text>
-              <Text style={styles.age}>
-                {animal.raca} - {animal.sexo === "M" ? "Macho" : "Fêmea"}
-              </Text>
-            </View>
-          </View>
+          {/* Card do animal -> leva para eventos */}
+          <Link
+            href={{ pathname: "/pages/eventos", params: { animalId: animal.id } }}
+            asChild
+          >
+            <Pressable style={styles.itemLeft}>
+              <Image
+                source={{
+                  uri: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Cow_female_black_white.jpg",
+                }}
+                style={styles.image}
+                contentFit="cover"
+              />
+              <View>
+                <Text style={styles.name}>{animal.nome}</Text>
+                <Text style={styles.age}>
+                  {animal.raca} - {animal.sexo === "M" ? "Macho" : "Fêmea"}
+                </Text>
+              </View>
+            </Pressable>
+          </Link>
 
-          <IconSymbol size={28} name="calendar" color={"#fff"} />
+          {/* Botões de ação */}
+          <View style={styles.actions}>
+            <Link
+              href={{ pathname: "/pages/eventos", params: { animalId: animal.id } }}
+              asChild
+            >
+              <Pressable style={{ ...styles.actionBtn, backgroundColor: "#1e90ff" }}>
+                <Text style={styles.actionText}>Eventos</Text>
+              </Pressable>
+            </Link>
+
+            <Link
+              href={{ pathname: "/forms/formularioAnimal", params: { id: animal.id } }}
+              asChild
+            >
+              <Pressable style={{ ...styles.actionBtn, backgroundColor: "#10b981" }}>
+                <Text style={styles.actionText}>Editar</Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
       );
     } else if (tipoUsuario === "veterinario") {
@@ -145,7 +165,7 @@ export default function HomeScreen() {
 
       <FlatList
         data={dados}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => (item as any).id}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 8, gap: 8, paddingBottom: 100 }}
         ListEmptyComponent={
@@ -197,6 +217,9 @@ const styles = StyleSheet.create({
   image: { width: 50, height: 50, borderRadius: 5 },
   name: { color: "#000", fontWeight: "600" },
   age: { color: "#000" },
+  actions: { flexDirection: "row", gap: 8, marginLeft: 8 },
+  actionBtn: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8 },
+  actionText: { color: "#fff", fontWeight: "700" },
   footer: {
     position: "absolute",
     bottom: 0,

@@ -1,5 +1,5 @@
-// app/formularioAnimal.tsx
-import { Stack, useRouter } from "expo-router";
+// app/forms/formularioAnimal.tsx
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -34,7 +34,7 @@ LocaleConfig.locales["pt-br"] = {
 };
 LocaleConfig.defaultLocale = "pt-br";
 
-import { Animal, salvarAnimal, Vacina } from "../../services/animalService";
+import { Animal, obterAnimal, salvarAnimal } from "../../services/animalService";
 
 /* ===================== Helpers de Data ===================== */
 function pad(n: number) {
@@ -323,7 +323,7 @@ const androidStyles = StyleSheet.create({
   actionText: { color: "#00780a", fontWeight: "700" },
 });
 
-/* ===================== Tipagem do Form ===================== */
+/* ===================== Tipagem do Form (local) ===================== */
 type AnimalForm = {
   nome: string;
   raca: string;
@@ -337,8 +337,6 @@ type AnimalForm = {
   mae_nome: string;
   mae_registro: string;
   mae_raca: string;
-
-  vacinas: Vacina[];
 };
 
 /* ===================== UI Auxiliares ===================== */
@@ -383,6 +381,10 @@ const LabeledInput = ({
 /* ===================== Tela ===================== */
 export default function FormularioAnimal() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>(); // edição se vier id
+
+  const [animalId, setAnimalId] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
 
   const [form, setForm] = useState<AnimalForm>({
     nome: "",
@@ -395,42 +397,41 @@ export default function FormularioAnimal() {
     mae_nome: "",
     mae_registro: "",
     mae_raca: "",
-    vacinas: [],
-  });
-
-  const [novaVacina, setNovaVacina] = useState<Vacina>({
-    tipo: "",
-    data_aplicacao: "",
-    validade_dias: "",
   });
 
   const setField = <K extends keyof AnimalForm>(key: K, value: AnimalForm[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
-
-  const adicionarVacina = () => {
-    if (!novaVacina.tipo.trim() || !novaVacina.data_aplicacao.trim()) {
-      Alert.alert("Vacina incompleta", "Informe tipo e data de aplicação.");
-      return;
-    }
-    setForm((prev) => ({
-      ...prev,
-      vacinas: [...prev.vacinas, novaVacina],
-    }));
-    setNovaVacina({ tipo: "", data_aplicacao: "", validade_dias: "" });
-  };
-
-  const removerVacina = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      vacinas: prev.vacinas.filter((_, i) => i !== index),
-    }));
-  };
 
   const obrigatoriosOk =
     !!form.nome.trim() &&
     !!form.raca.trim() &&
     !!form.sexo &&
     !!form.dataNascimento.trim();
+
+  // Carregar dados quando estiver editando
+  React.useEffect(() => {
+    if (!id) return;
+    (async () => {
+      try {
+        const a = await obterAnimal(id);
+        setAnimalId(a.id!);
+        setForm({
+          nome: a.nome ?? "",
+          raca: a.raca ?? "",
+          sexo: (a.sexo as "M" | "F") ?? "",
+          dataNascimento: a.data_nascimento ?? "",
+          pai_nome: a.pai_nome ?? "",
+          pai_registro: a.pai_registro ?? "",
+          pai_raca: a.pai_raca ?? "",
+          mae_nome: a.mae_nome ?? "",
+          mae_registro: a.mae_registro ?? "",
+          mae_raca: a.mae_raca ?? "",
+        });
+      } catch (e: any) {
+        Alert.alert("Erro", e.message ?? "Falha ao carregar animal.");
+      }
+    })();
+  }, [id]);
 
   const onSalvar = async () => {
     if (!obrigatoriosOk) {
@@ -442,6 +443,7 @@ export default function FormularioAnimal() {
     }
 
     const animalParaSalvar: Animal = {
+      id: animalId ?? undefined,
       nome: form.nome,
       raca: form.raca,
       sexo: form.sexo as "M" | "F",
@@ -452,15 +454,18 @@ export default function FormularioAnimal() {
       mae_nome: form.mae_nome || undefined,
       mae_registro: form.mae_registro || undefined,
       mae_raca: form.mae_raca || undefined,
-      vacinas: form.vacinas.length > 0 ? form.vacinas : undefined,
     };
 
     try {
-      await salvarAnimal(animalParaSalvar);
+      setSalvando(true);
+      const salvo = await salvarAnimal(animalParaSalvar);
+      setAnimalId(salvo.id!);
       Alert.alert("Sucesso", "Animal salvo com sucesso!");
-      router.push("../pages/home");
+      // router.push("../pages/home");
     } catch (err: any) {
       Alert.alert("Erro", err.message || "Não foi possível salvar o animal.");
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -474,9 +479,11 @@ export default function FormularioAnimal() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.mainTitle}>Cadastro de Animal</Text>
+          <Text style={styles.mainTitle}>
+            {animalId ? "Editar Animal" : "Cadastro de Animal"}
+          </Text>
           <Text style={styles.subtitle}>
-            Preencha as informações abaixo para cadastrar um novo animal.
+            Preencha as informações abaixo.
           </Text>
 
           {/* Dados do Animal */}
@@ -565,82 +572,31 @@ export default function FormularioAnimal() {
             />
           </Section>
 
-          {/* Vacinas */}
-          <Section title="Vacinas">
-            <DatePickerField
-              label="Data da Aplicação"
-              value={novaVacina.data_aplicacao}
-              onChange={(s) =>
-                setNovaVacina((v) => ({ ...v, data_aplicacao: s }))
-              }
-              maxDate={new Date()}
-            />
-            <LabeledInput
-              label="Tipo da Vacina"
-              value={novaVacina.tipo}
-              onChangeText={(t) => setNovaVacina((s) => ({ ...s, tipo: t }))}
-            />
-            <LabeledInput
-              label="Validade (dias)"
-              keyboardType="numeric"
-              value={novaVacina.validade_dias || ""}
-              onChangeText={(t) =>
-                setNovaVacina((s) => ({ ...s, validade_dias: t }))
-              }
-            />
-
+          {/* Botão Eventos (só aparece com id) */}
+          {animalId && (
             <TouchableOpacity
-              style={styles.addBtn}
               activeOpacity={0.85}
-              onPress={adicionarVacina}
+              onPress={() =>
+                router.push({ pathname: "/pages/eventos", params: { animalId } })
+              }
+              style={[styles.saveBtn, { backgroundColor: "#1e90ff", marginBottom: 8 }]}
             >
-              <Text style={styles.addBtnText}>Adicionar vacina</Text>
+              <Text style={styles.saveBtnText}>Ver eventos do animal</Text>
             </TouchableOpacity>
-
-            {form.vacinas.length > 0 && (
-              <View style={{ gap: 8, marginTop: 8 }}>
-                {form.vacinas.map((v, i) => (
-                  <View key={i} style={styles.vacinaCard}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.vacinaTitle}>{v.tipo}</Text>
-                      <Text style={styles.vacinaLine}>
-                        Aplicação: {v.data_aplicacao}
-                      </Text>
-                      {!!v.validade_dias && (
-                        <Text style={styles.vacinaLine}>
-                          Validade: {v.validade_dias} dias
-                        </Text>
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => removerVacina(i)}
-                      style={styles.removeBtn}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={{ color: "#fff", fontWeight: "600" }}>
-                        Remover
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
-          </Section>
+          )}
 
           {/* Salvar */}
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={onSalvar}
-            disabled={!obrigatoriosOk}
             style={[
               styles.saveBtn,
-              !obrigatoriosOk && { backgroundColor: "#9fd8a5" },
+              salvando && { opacity: 0.6 },
+              !obrigatoriosOk && { opacity: 0.6 },
             ]}
           >
             <Text style={styles.saveBtnText}>
-              {obrigatoriosOk
-                ? "Salvar Animal"
-                : "Preencha os campos obrigatórios"}
+              {salvando ? "Salvando..." : (animalId ? "Salvar alterações" : "Salvar Animal")}
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -693,31 +649,6 @@ const styles = StyleSheet.create({
   },
   sexoBtnActive: { backgroundColor: "#00780a", borderColor: "#00780a" },
   sexoBtnText: { color: "#00780a", fontWeight: "600" },
-  addBtn: {
-    alignSelf: "flex-start",
-    backgroundColor: "#00780a",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  addBtnText: { color: "#fff", fontWeight: "700" },
-  vacinaCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderWidth: 1,
-    borderColor: "#e6e6e6",
-    borderRadius: 10,
-    padding: 10,
-  },
-  vacinaTitle: { fontWeight: "700", color: "#000" },
-  vacinaLine: { color: "#333" },
-  removeBtn: {
-    backgroundColor: "#d7263d",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
   saveBtn: {
     backgroundColor: "#00780a",
     paddingVertical: 14,
