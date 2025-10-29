@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -212,9 +213,16 @@ export default function FormularioEvento() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "#fff" }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
+    >
       <Stack.Screen options={{ title: editando ? "Editar evento" : "Novo evento" }} />
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         {/* Tipo */}
         <Text style={styles.label}>Tipo *</Text>
         <View style={styles.rowWrap}>
@@ -312,7 +320,7 @@ export default function FormularioEvento() {
           </Pressable>
         ) : null}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -74,7 +74,10 @@ export default function VeterinarioForm() {
       style={styles.container}
     >
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Cadastro de Veterinário</Text>
           <Text style={styles.subtitle}>

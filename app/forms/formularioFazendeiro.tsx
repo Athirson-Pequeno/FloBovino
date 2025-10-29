@@ -1,15 +1,15 @@
 import { Stack } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { salvarFazendeiro } from "../../services/fazendeiroService";
 
@@ -70,7 +70,10 @@ export default function FormularioFazendeiro() {
       style={styles.container}
     >
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Cadastro de Fazendeiro</Text>
           <Text style={styles.subtitle}>
