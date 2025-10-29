@@ -1,17 +1,18 @@
 // app/pages/eventos.tsx
+import { useFocusEffect } from "@react-navigation/native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
-import React from "react";
+import React, { useCallback } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Pressable,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  Text,
+  View,
 } from "react-native";
 
 import {
-    listarEventosPorAnimal,
-    type AnimalEvent,
+  listarEventosPorAnimal,
+  type AnimalEvent,
 } from "../../services/eventoService";
 
 export default function EventosPage() {
@@ -40,9 +41,11 @@ export default function EventosPage() {
     }
   }
 
-  React.useEffect(() => {
-    carregar();
-  }, [animalId]);
+  useFocusEffect(
+    useCallback(() => {
+      carregar();
+    }, [animalId])
+  );
 
   return (
     <View style={{ flex: 1, padding: 16, gap: 12, backgroundColor: "#fff" }}>

@@ -1,9 +1,8 @@
 // app/home.tsx
+import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { Link, Stack } from "expo-router";
-import { useEffect, useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
