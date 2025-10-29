@@ -5,12 +5,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { salvarFazendeiro } from "../../services/fazendeiroService";
 
 export default function FormularioFazendeiro() {
@@ -66,14 +66,19 @@ export default function FormularioFazendeiro() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={{ flex: 1, backgroundColor: "#fff" }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
     >
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView
+
+      <KeyboardAwareScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        extraScrollHeight={120}
+        enableOnAndroid={true}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Cadastro de Fazendeiro</Text>
           <Text style={styles.subtitle}>
@@ -157,7 +162,7 @@ export default function FormularioFazendeiro() {
             <Text style={styles.submitButtonText}>Cadastrar</Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -168,9 +173,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   scroll: {
+    flexGrow: 1, // ✅ deixa o conteúdo crescer e rolar
     alignItems: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
+    backgroundColor: "#fff",
   },
   header: {
     alignItems: "center",
@@ -225,3 +232,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+

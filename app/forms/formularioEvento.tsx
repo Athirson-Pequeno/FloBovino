@@ -7,12 +7,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 // ✅ imports RELATIVOS
 import {
@@ -215,14 +215,18 @@ export default function FormularioEvento() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#fff" }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
     >
-      <Stack.Screen options={{ title: editando ? "Editar evento" : "Novo evento" }} />
-      <ScrollView
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <KeyboardAwareScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        extraScrollHeight={250}
+        enableOnAndroid={true}
+      >
         {/* Tipo */}
         <Text style={styles.label}>Tipo *</Text>
         <View style={styles.rowWrap}>
@@ -319,7 +323,7 @@ export default function FormularioEvento() {
             <Text style={styles.btnText}>Excluir evento</Text>
           </Pressable>
         ) : null}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </KeyboardAvoidingView>
   );
 }

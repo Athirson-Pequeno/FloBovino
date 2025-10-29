@@ -5,12 +5,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { salvarVeterinario } from "../../services/veterinarioService";
 
 export default function VeterinarioForm() {
@@ -70,14 +70,19 @@ export default function VeterinarioForm() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={{ flex: 1, backgroundColor: "#fff" }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
     >
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView
+
+      <KeyboardAwareScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        extraScrollHeight={120}
+        enableOnAndroid={true}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Cadastro de Veterinário</Text>
           <Text style={styles.subtitle}>
@@ -176,7 +181,7 @@ export default function VeterinarioForm() {
             <Text style={styles.submitButtonText}>Cadastrar</Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -187,9 +192,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   scroll: {
+    flexGrow: 1, // ✅ deixa o conteúdo crescer e rolar
     alignItems: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
+    backgroundColor: "#fff",
   },
   header: {
     alignItems: "center",

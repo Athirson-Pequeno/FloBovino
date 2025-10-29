@@ -28,13 +28,11 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="pages/login" />
           <Stack.Screen name="pages/home" />
-          <Stack.Screen name="pages/loginFazendeiro" />
           <Stack.Screen name="forms/formularioAnimal" />
           <Stack.Screen name="forms/formularioFazendeiro" />
           <Stack.Screen name="forms/formularioVeterinario" />
-          <Stack.Screen name="pages/fazendeiros" />
+          <Stack.Screen name="pages/eventos" />
           <Stack.Screen name="pages/veterinarios" />
-          <Stack.Screen name="pages/dashboardFazendeiro" />
         </Stack>
       </ThemeProvider>
     </SafeAreaView>

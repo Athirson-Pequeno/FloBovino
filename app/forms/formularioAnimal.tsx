@@ -7,13 +7,13 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -24,12 +24,12 @@ import { Calendar, LocaleConfig } from "react-native-calendars";
 // Locale PT-BR para o calendário (Android)
 LocaleConfig.locales["pt-br"] = {
   monthNames: [
-    "janeiro","fevereiro","março","abril","maio","junho",
-    "julho","agosto","setembro","outubro","novembro","dezembro",
+    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
   ],
-  monthNamesShort: ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"],
-  dayNames: ["domingo","segunda","terça","quarta","quinta","sexta","sábado"],
-  dayNamesShort: ["dom","seg","ter","qua","qui","sex","sáb"],
+  monthNamesShort: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
+  dayNames: ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"],
+  dayNamesShort: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"],
   today: "Hoje",
 };
 LocaleConfig.defaultLocale = "pt-br";
@@ -461,7 +461,7 @@ export default function FormularioAnimal() {
       const salvo = await salvarAnimal(animalParaSalvar);
       setAnimalId(salvo.id!);
       Alert.alert("Sucesso", "Animal salvo com sucesso!");
-      // router.push("../pages/home");
+      router.push("../pages/home");
     } catch (err: any) {
       Alert.alert("Erro", err.message || "Não foi possível salvar o animal.");
     } finally {
@@ -470,138 +470,143 @@ export default function FormularioAnimal() {
   };
 
   return (
-    <>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "#fff" }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
+    >
       <Stack.Screen options={{ headerShown: false }} />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: "#fff" }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        extraScrollHeight={250}
+        enableOnAndroid={true}
       >
-        <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.mainTitle}>
-            {animalId ? "Editar Animal" : "Cadastro de Animal"}
-          </Text>
-          <Text style={styles.subtitle}>
-            Preencha as informações abaixo.
-          </Text>
+        <Text style={styles.mainTitle}>
+          {animalId ? "Editar Animal" : "Cadastro de Animal"}
+        </Text>
+        <Text style={styles.subtitle}>
+          Preencha as informações abaixo.
+        </Text>
 
-          {/* Dados do Animal */}
-          <Section title="Dados do Animal">
-            <LabeledInput
-              label="Nome *"
-              value={form.nome}
-              onChangeText={(t) => setField("nome", t)}
-            />
-            <LabeledInput
-              label="Raça *"
-              value={form.raca}
-              onChangeText={(t) => setField("raca", t)}
-            />
+        {/* Dados do Animal */}
+        <Section title="Dados do Animal">
+          <LabeledInput
+            label="Nome *"
+            value={form.nome}
+            onChangeText={(t) => setField("nome", t)}
+          />
+          <LabeledInput
+            label="Raça *"
+            value={form.raca}
+            onChangeText={(t) => setField("raca", t)}
+          />
 
-            <View style={{ gap: 6 }}>
-              <Text style={styles.label}>Sexo *</Text>
-              <View style={styles.sexoRow}>
-                {(["M", "F"] as const).map((sx) => (
-                  <TouchableOpacity
-                    key={sx}
-                    onPress={() => setField("sexo", sx)}
-                    activeOpacity={0.85}
+          <View style={{ gap: 6 }}>
+            <Text style={styles.label}>Sexo *</Text>
+            <View style={styles.sexoRow}>
+              {(["M", "F"] as const).map((sx) => (
+                <TouchableOpacity
+                  key={sx}
+                  onPress={() => setField("sexo", sx)}
+                  activeOpacity={0.85}
+                  style={[
+                    styles.sexoBtn,
+                    form.sexo === sx && styles.sexoBtnActive,
+                  ]}
+                >
+                  <Text
                     style={[
-                      styles.sexoBtn,
-                      form.sexo === sx && styles.sexoBtnActive,
+                      styles.sexoBtnText,
+                      form.sexo === sx && { color: "#fff" },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.sexoBtnText,
-                        form.sexo === sx && { color: "#fff" },
-                      ]}
-                    >
-                      {sx === "M" ? "Macho" : "Fêmea"}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                    {sx === "M" ? "Macho" : "Fêmea"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
+          </View>
 
-            {/* Data de Nascimento */}
-            <DatePickerField
-              label="Data de Nascimento *"
-              value={form.dataNascimento}
-              onChange={(s) => setField("dataNascimento", s)}
-              maxDate={new Date()}
-            />
-          </Section>
+          {/* Data de Nascimento */}
+          <DatePickerField
+            label="Data de Nascimento *"
+            value={form.dataNascimento}
+            onChange={(s) => setField("dataNascimento", s)}
+            maxDate={new Date()}
+          />
+        </Section>
 
-          {/* Informações do Pai */}
-          <Section title="Informações do Pai">
-            <LabeledInput
-              label="Nome"
-              value={form.pai_nome}
-              onChangeText={(t) => setField("pai_nome", t)}
-            />
-            <LabeledInput
-              label="Registro"
-              value={form.pai_registro}
-              onChangeText={(t) => setField("pai_registro", t)}
-            />
-            <LabeledInput
-              label="Raça"
-              value={form.pai_raca}
-              onChangeText={(t) => setField("pai_raca", t)}
-            />
-          </Section>
+        {/* Informações do Pai */}
+        <Section title="Informações do Pai">
+          <LabeledInput
+            label="Nome"
+            value={form.pai_nome}
+            onChangeText={(t) => setField("pai_nome", t)}
+          />
+          <LabeledInput
+            label="Registro"
+            value={form.pai_registro}
+            onChangeText={(t) => setField("pai_registro", t)}
+          />
+          <LabeledInput
+            label="Raça"
+            value={form.pai_raca}
+            onChangeText={(t) => setField("pai_raca", t)}
+          />
+        </Section>
 
-          {/* Informações da Mãe */}
-          <Section title="Informações da Mãe">
-            <LabeledInput
-              label="Nome"
-              value={form.mae_nome}
-              onChangeText={(t) => setField("mae_nome", t)}
-            />
-            <LabeledInput
-              label="Registro"
-              value={form.mae_registro}
-              onChangeText={(t) => setField("mae_registro", t)}
-            />
-            <LabeledInput
-              label="Raça"
-              value={form.mae_raca}
-              onChangeText={(t) => setField("mae_raca", t)}
-            />
-          </Section>
+        {/* Informações da Mãe */}
+        <Section title="Informações da Mãe">
+          <LabeledInput
+            label="Nome"
+            value={form.mae_nome}
+            onChangeText={(t) => setField("mae_nome", t)}
+          />
+          <LabeledInput
+            label="Registro"
+            value={form.mae_registro}
+            onChangeText={(t) => setField("mae_registro", t)}
+          />
+          <LabeledInput
+            label="Raça"
+            value={form.mae_raca}
+            onChangeText={(t) => setField("mae_raca", t)}
+          />
+        </Section>
 
-          {/* Botão Eventos (só aparece com id) */}
-          {animalId && (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() =>
-                router.push({ pathname: "/pages/eventos", params: { animalId } })
-              }
-              style={[styles.saveBtn, { backgroundColor: "#1e90ff", marginBottom: 8 }]}
-            >
-              <Text style={styles.saveBtnText}>Ver eventos do animal</Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Salvar */}
+        {/* Botão Eventos (só aparece com id) */}
+        {animalId && (
           <TouchableOpacity
             activeOpacity={0.85}
-            onPress={onSalvar}
-            style={[
-              styles.saveBtn,
-              salvando && { opacity: 0.6 },
-              !obrigatoriosOk && { opacity: 0.6 },
-            ]}
+            onPress={() =>
+              router.push({ pathname: "/pages/eventos", params: { animalId } })
+            }
+            style={[styles.saveBtn, { backgroundColor: "#1e90ff", marginBottom: 8 }]}
           >
-            <Text style={styles.saveBtnText}>
-              {salvando ? "Salvando..." : (animalId ? "Salvar alterações" : "Salvar Animal")}
-            </Text>
+            <Text style={styles.saveBtnText}>Ver eventos do animal</Text>
           </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </>
+        )}
+
+        {/* Salvar */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onSalvar}
+          disabled={salvando}
+          style={[
+            styles.saveBtn,
+            salvando && { opacity: 0.6 },
+            !obrigatoriosOk && { opacity: 0.6 },
+          ]}
+        >
+          <Text style={styles.saveBtnText}>
+            {salvando ? "Salvando..." : (animalId ? "Salvar alterações" : "Salvar Animal")}
+          </Text>
+        </TouchableOpacity>
+      </KeyboardAwareScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

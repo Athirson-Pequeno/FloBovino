@@ -2,6 +2,8 @@
 import { Image } from "expo-image";
 import { Link, Stack } from "expo-router";
 import { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -60,40 +62,42 @@ export default function HomeScreen() {
   }
 
 
-  useEffect(() => {
-    async function carregarDados() {
-      try {
-        setLoading(true);
+  useFocusEffect(
+    useCallback(() => {
+      async function carregarDados() {
+        try {
+          setLoading(true);
 
-        const { data: userRes, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
-        if (!userRes.user) return;
+          const { data: userRes, error: userError } = await supabase.auth.getUser();
+          if (userError) throw userError;
+          if (!userRes.user) return;
 
-        const { data: perfilData, error: perfilError } = await supabase
-          .from("usuarios")
-          .select("id, nome, email, tipo")
-          .eq("id", userRes.user.id)
-          .single();
+          const { data: perfilData, error: perfilError } = await supabase
+            .from("usuarios")
+            .select("id, nome, email, tipo")
+            .eq("id", userRes.user.id)
+            .single();
 
-        if (perfilError) throw perfilError;
-        setTipoUsuario(perfilData.tipo);
+          if (perfilError) throw perfilError;
+          setTipoUsuario(perfilData.tipo);
 
-        if (perfilData.tipo === "fazendeiro") {
-          const animais = await listarAnimaisDoUsuario();
-          setDados(animais || []);
-        } else if (perfilData.tipo === "veterinario") {
-          const clientes = await listarClientesDoVeterinario(perfilData.id);
-          setDados(clientes || []);
+          if (perfilData.tipo === "fazendeiro") {
+            const animais = await listarAnimaisDoUsuario();
+            setDados(animais || []);
+          } else if (perfilData.tipo === "veterinario") {
+            const clientes = await listarClientesDoVeterinario(perfilData.id);
+            setDados(clientes || []);
+          }
+        } catch (err) {
+          console.error("Erro ao carregar dados:", err);
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error("Erro ao carregar dados:", err);
-      } finally {
-        setLoading(false);
       }
-    }
 
-    carregarDados();
-  }, []);
+      carregarDados();
+    }, [])
+  );
 
   const renderItem = ({ item }: { item: TipoDado }) => {
     if (tipoUsuario === "fazendeiro") {
