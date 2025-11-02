@@ -10,23 +10,24 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
-// ✅ imports RELATIVOS
+import ModalExcluir from "@/components/modalExcluirEvento";
 import {
   atualizarEvento,
   criarEvento,
-  excluirEvento,
   obterEvento,
   type AnimalEvent,
   type EventType,
 } from "../../services/eventoService";
 import { criarVacina } from "../../services/vacinaService";
 
-/* Helpers simples de data (YYYY-MM-DD) */
-function pad(n: number) { return String(n).padStart(2, "0"); }
+/* ===== Helpers de data (YYYY-MM-DD) ===== */
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
 function toISO(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -38,7 +39,7 @@ function parseISO(s?: string) {
   return isNaN(d.getTime()) ? null : d;
 }
 
-/* Campo de data multiplataforma */
+/* ===== Campo de data multiplataforma ===== */
 function ISODateField({
   label,
   value,
@@ -72,12 +73,18 @@ function ISODateField({
       ) : (
         <>
           <Pressable onPress={() => setOpen(true)}>
-            <TextInput value={value} editable={false} style={styles.input} placeholder="YYYY-MM-DD" />
+            <TextInput
+              value={value}
+              editable={false}
+              style={styles.input}
+              placeholder="YYYY-MM-DD"
+            />
           </Pressable>
           {open && (
             <DateTimePicker
               mode="date"
               value={date}
+              display={Platform.OS === "ios" ? "inline" : "default"}
               onChange={(_, d) => {
                 if (d) onChange(toISO(d));
                 setOpen(false);
@@ -94,7 +101,7 @@ function ISODateField({
 
 const TIPOS: EventType[] = [
   "VACINA",
-  "PESAGEM",
+  "INSEMINAÇÃO",
   "CONSULTA",
   "MEDICACAO",
   "REPRODUCAO",
@@ -109,17 +116,18 @@ export default function FormularioEvento() {
 
   const editando = Boolean(id);
   const [salvando, setSalvando] = React.useState(false);
+  const [excluindo, setExcluindo] = React.useState(false); // se quiser usar dentro do modal, pode tirar daqui
+  const [modalExcluirVisivel, setModalExcluirVisivel] = React.useState(false);
 
   // campos do evento
   const [tipo, setTipo] = React.useState<EventType>("OCORRENCIA");
   const [data, setData] = React.useState<string>(toISO(new Date()));
   const [descricao, setDescricao] = React.useState("");
 
-  // campos extras quando tipo = VACINA (salvos na tabela "vacinas")
+  // campos extras quando tipo = VACINA
   const [vacinaNome, setVacinaNome] = React.useState("");
   const [vacinaLote, setVacinaLote] = React.useState("");
   const [vacinaValidade, setVacinaValidade] = React.useState<string>("");
-
   const [mostrarValidade, setMostrarValidade] = React.useState(false);
 
   // Preload quando editar
@@ -129,10 +137,8 @@ export default function FormularioEvento() {
       try {
         const ev = await obterEvento(String(id));
         setTipo(ev.tipo);
-        setData(ev.data_do_evento);       // ✅ nome correto
+        setData(ev.data_do_evento); // nome certo da coluna
         setDescricao(ev.descricao ?? "");
-        // Obs.: dados de vacina não estão em "eventos", por isso não dá pra pré-carregar
-        // vacinaNome/lote/validade aqui sem buscar na tabela "vacinas". Mantemos em branco.
       } catch (e: any) {
         Alert.alert("Erro", e.message ?? "Falha ao carregar evento.");
       }
@@ -141,6 +147,7 @@ export default function FormularioEvento() {
 
   const obrigatoriosOk = !!animalId && !!data && !!tipo;
 
+  /* ===== SALVAR ===== */
   async function onSalvar() {
     try {
       if (!obrigatoriosOk) {
@@ -150,29 +157,24 @@ export default function FormularioEvento() {
       setSalvando(true);
 
       const payload: AnimalEvent = {
-        id: id ? Number(id) : undefined, // sua PK é int8
+        id: id ? Number(id) : undefined,
         id_animal: String(animalId),
         tipo,
-        data_do_evento: data,            // ✅ nome correto
+        data_do_evento: data,
         descricao: descricao || undefined,
       };
 
-      let salvo: AnimalEvent;
-      if (payload.id) {
-        salvo = await atualizarEvento(payload.id, payload);
-      } else {
-        salvo = await criarEvento(payload);
-      }
+      if (payload.id) await atualizarEvento(payload.id, payload);
+      else await criarEvento(payload);
 
-      // Se for VACINA, grava na tabela "vacinas"
+      // se for vacina, grava também na tabela de vacinas
       if (tipo === "VACINA" && vacinaNome.trim()) {
-        // calcular validade em dias (opcional)
         let validadeDias: number | null = null;
         const dAplic = parseISO(data);
         const dVal = parseISO(vacinaValidade);
         if (dAplic && dVal) {
-          const diff = Math.round((dVal.getTime() - dAplic.getTime()) / (1000 * 60 * 60 * 24));
-          validadeDias = isNaN(diff) ? null : Math.max(diff, 0);
+          const diff = (dVal.getTime() - dAplic.getTime()) / (1000 * 60 * 60 * 24);
+          validadeDias = Math.max(Math.round(diff), 0);
         }
 
         await criarVacina({
@@ -192,26 +194,19 @@ export default function FormularioEvento() {
     }
   }
 
+  /* ===== EXCLUIR ===== */
   function onExcluir() {
-    if (!id) return;
-    Alert.alert("Excluir", "Deseja excluir este evento?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Excluir",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await excluirEvento(String(id));
-            Alert.alert("Pronto", "Evento excluído.");
-            router.back();
-          } catch (e: any) {
-            Alert.alert("Erro", e.message ?? "Falha ao excluir.");
-          }
-        },
-      },
-    ]);
+    const rawId = id;
+    if (!rawId) {
+      Alert.alert("Erro", "Não foi possível identificar o evento para exclusão.");
+      return;
+    }
+
+    // 👉 em vez de Alert.alert, abrimos o modal
+    setModalExcluirVisivel(true);
   }
 
+  /* ===== INTERFACE ===== */
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#fff" }}
@@ -262,7 +257,7 @@ export default function FormularioEvento() {
           placeholder="Observações..."
         />
 
-        {/* Campos extras quando for vacina */}
+        {/* Campos de vacina */}
         {tipo === "VACINA" && (
           <View style={{ gap: 10, marginTop: 10 }}>
             <Text style={styles.sectionTitle}>Dados da vacina</Text>
@@ -296,7 +291,7 @@ export default function FormularioEvento() {
             {mostrarValidade && (
               <DateTimePicker
                 mode="date"
-                value={vacinaValidade ? (parseISO(vacinaValidade) ?? new Date()) : new Date()}
+                value={vacinaValidade ? parseISO(vacinaValidade) ?? new Date() : new Date()}
                 display={Platform.OS === "ios" ? "inline" : "default"}
                 onChange={(_, d) => {
                   setMostrarValidade(false);
@@ -304,7 +299,6 @@ export default function FormularioEvento() {
                 }}
               />
             )}
-
           </View>
         )}
 
@@ -312,18 +306,32 @@ export default function FormularioEvento() {
         <Pressable
           onPress={onSalvar}
           style={[styles.btn, { backgroundColor: "#00780a" }]}
+          disabled={salvando}
         >
           <Text style={styles.btnText}>
             {salvando ? "Salvando..." : editando ? "Salvar alterações" : "Salvar evento"}
           </Text>
         </Pressable>
 
-        {editando ? (
-          <Pressable onPress={onExcluir} style={[styles.btn, { backgroundColor: "#dc2626" }]}>
-            <Text style={styles.btnText}>Excluir evento</Text>
+        {editando && (
+          <Pressable
+            onPress={onExcluir}
+            style={[styles.btn, { backgroundColor: "#dc2626" }]}
+            disabled={excluindo}
+          >
+            <Text style={styles.btnText}>{excluindo ? "Excluindo..." : "Excluir evento"}</Text>
           </Pressable>
-        ) : null}
+        )}
       </KeyboardAwareScrollView>
+
+      {/* 👉 Modal de confirmação de exclusão */}
+      {editando && (
+        <ModalExcluir
+          visible={modalExcluirVisivel}
+          onClose={() => setModalExcluirVisivel(false)}
+          rawId={id}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }

@@ -1,12 +1,10 @@
 import { supabase } from '../config/supabase_config';
 
 export type Endereco = {
-  numero: string;
   bairro: string;
   cep: string;
   cidade: string;
   estado: string;
-  complemento?: string;
 };
 
 export type Fazendeiro = {
@@ -55,12 +53,10 @@ export async function salvarFazendeiro(fazendeiro: Fazendeiro) {
     const { error: insertError } = await supabase.from('fazendeiros').insert([
       {
         id: userId, // mantém o vínculo 1-1
-        numero: fazendeiro.endereco.numero,
         bairro: fazendeiro.endereco.bairro,
         cep: fazendeiro.endereco.cep,
         cidade: fazendeiro.endereco.cidade,
         estado: fazendeiro.endereco.estado,
-        complemento: fazendeiro.endereco.complemento || null,
       },
     ]);
 

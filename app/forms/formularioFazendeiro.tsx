@@ -19,12 +19,10 @@ export default function FormularioFazendeiro() {
     email: "",
     senha: "",
     endereco: {
-      numero: "",
       bairro: "",
       cep: "",
       cidade: "",
       estado: "",
-      complemento: "",
     },
   });
 
@@ -54,12 +52,10 @@ export default function FormularioFazendeiro() {
       email: "",
       senha: "",
       endereco: {
-        numero: "",
         bairro: "",
         cep: "",
         cidade: "",
         estado: "",
-        complemento: "",
       },
     });
   };
@@ -141,20 +137,6 @@ export default function FormularioFazendeiro() {
             onChangeText={(text) => handleChange("cep", text)}
             placeholder="CEP *"
             keyboardType="numeric"
-          />
-
-          <TextInput
-            style={styles.input}
-            value={fazendeiro.endereco.numero}
-            onChangeText={(text) => handleChange("numero", text)}
-            placeholder="Número *"
-          />
-
-          <TextInput
-            style={styles.input}
-            value={fazendeiro.endereco.complemento}
-            onChangeText={(text) => handleChange("complemento", text)}
-            placeholder="Complemento (opcional)"
           />
 
           {/* Botão */}

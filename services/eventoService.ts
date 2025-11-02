@@ -1,9 +1,8 @@
-// services/eventoService.ts
 import { supabase } from "../config/supabase_config";
 
 export type EventType =
   | "VACINA"
-  | "PESAGEM"
+  | "INSEMINAÇÃO"
   | "CONSULTA"
   | "MEDICACAO"
   | "REPRODUCAO"
@@ -12,16 +11,11 @@ export type EventType =
   | "BAIXA";
 
 export interface AnimalEvent {
-  id?: number | string;     // sua tabela usa int8
-  id_animal: string;        // FK (uuid) para animais.id
+  id?: number;
+  id_animal: string;        // FK para animais.id
   tipo: EventType;
   data_do_evento: string;   // 'YYYY-MM-DD'
   descricao?: string;
-
-  // se você NÃO usa colunas de vacina em 'eventos', pode remover estes 3
-  vacina_nome?: string;
-  vacina_lote?: string;
-  vacina_validade?: string; // 'YYYY-MM-DD'
 }
 
 const TABLE = "eventos";
@@ -71,7 +65,17 @@ export async function atualizarEvento(id: number | string, patch: Partial<Animal
   return data as AnimalEvent;
 }
 
-export async function excluirEvento(id: number | string): Promise<void> {
-  const { error } = await supabase.from(TABLE).delete().eq("id", id);
+export async function excluirEvento(id: number | string): Promise<void> { 
+
+  console.log("excluir");
+
+  const parsedId = isNaN(Number(id)) ? id : Number(id);
+
+  const { error, count } = await supabase
+    .from(TABLE)
+    .delete({ count: "exact" })
+    .eq("id", parsedId);
+
   if (error) throw error;
+  if (!count) throw new Error("Evento não encontrado para exclusão.");
 }
