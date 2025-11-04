@@ -46,13 +46,11 @@ function CustomHeader({ title }: { title: string }) {
 
   const handleConvidar = () => {
     setMenuOpen(false);
-    console.log("Convidar veterinário");
     router.push("/pages/veterinarios")
   };
 
   const handleSair = () => {
     setMenuOpen(false);
-    console.log("Sair");
   };
 
   return (

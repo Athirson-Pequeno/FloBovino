@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Dimensions
 } from "react-native";
 
 import EventosModal from "@/components/eventosModal";
@@ -17,6 +18,9 @@ import EventosModal from "@/components/eventosModal";
 import { supabase } from "@/config/supabase_config";
 import { listarAnimaisDoUsuario } from "@/services/animalService";
 import { listarClientesDoVeterinario } from "@/services/veterinarioService";
+
+const windowWidth = Dimensions.get("window").width;
+const isDesktop = windowWidth > 768;
 
 type Usuario = {
   id: string;
@@ -155,7 +159,10 @@ export default function HomeScreen() {
         data={dados}
         keyExtractor={(item) => (item as any).id}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 8, gap: 8, paddingBottom: 100 }}
+        contentContainerStyle={[
+          styles.listContainer,
+          isDesktop && { width: 700, alignSelf: "center" },
+        ]}
         ListEmptyComponent={
           <Text style={{ textAlign: "center", marginTop: 20, color: "#555" }}>
             Nenhum dado cadastrado ainda.
@@ -176,7 +183,7 @@ export default function HomeScreen() {
         {tipoUsuario === "fazendeiro" && (
           <Link href="../forms/formularioAnimal" asChild>
             <Pressable style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Abrir formulário animal</Text>
+              <Text style={styles.primaryButtonText}>Cadastrar novo animal</Text>
             </Pressable>
           </Link>
         )}
@@ -184,7 +191,7 @@ export default function HomeScreen() {
         {tipoUsuario === "veterinario" && (
           <Link href="../pages/veterinarios" asChild style={{ marginTop: 10 }}>
             <Pressable style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Selecionar veterinário</Text>
+              <Text style={styles.primaryButtonText}>Selecionar fazendeiro</Text>
             </Pressable>
           </Link>
         )}
@@ -204,6 +211,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     borderRadius: 8,
     justifyContent: "space-between",
+  },
+  listContainer: {
+    padding: 8,
+    gap: 8,
+    paddingBottom: 100,
+    width: "100%", // por padrão ocupa toda a largura
   },
   itemLeft: {
     flexDirection: "row",

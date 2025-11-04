@@ -8,9 +8,13 @@ import {
   Pressable,
   Modal,
   StyleSheet,
+  Dimensions
 } from "react-native";
 import { listarEventosPorAnimal, type AnimalEvent } from "@/services/eventoService";
 import { Link } from "expo-router";
+
+const windowWidth = Dimensions.get("window").width;
+const isDesktop = windowWidth > 768;
 
 type Props = {
   animalId: string;
@@ -117,7 +121,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    width: "90%",
+    width: isDesktop ? 700 : "90%",
     maxHeight: "80%",
     backgroundColor: "#fff",
     borderRadius: 12,
