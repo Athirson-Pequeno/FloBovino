@@ -1,12 +1,12 @@
 export type EventType =
-  | 'VACINA' | 'PESAGEM' | 'CONSULTA' | 'MEDICACAO'
-  | 'REPRODUCAO' | 'OCORRENCIA' | 'NASCIMENTO' | 'BAIXA';
+  | 'VACINA' | 'INSEMINAÇÃO'
+  | 'REPRODUÇÃO' | 'NASCIMENTO';
 
 export interface AnimalEvent {
   id?: string;
   animal_id: string;
   tipo: EventType;
-  data_evento: string;  // ISO 'YYYY-MM-DD'
+  data_evento: string;
   descricao?: string;
 
   // somente quando tipo = 'VACINA'

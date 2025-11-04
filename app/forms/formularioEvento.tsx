@@ -100,14 +100,10 @@ function ISODateField({
 }
 
 const TIPOS: EventType[] = [
-  "VACINA",
   "INSEMINAÇÃO",
-  "CONSULTA",
-  "MEDICACAO",
-  "REPRODUCAO",
-  "OCORRENCIA",
+  "VACINA",
+  "REPRODUÇÃO",
   "NASCIMENTO",
-  "BAIXA",
 ];
 
 export default function FormularioEvento() {
@@ -120,7 +116,7 @@ export default function FormularioEvento() {
   const [modalExcluirVisivel, setModalExcluirVisivel] = React.useState(false);
 
   // campos do evento
-  const [tipo, setTipo] = React.useState<EventType>("OCORRENCIA");
+  const [tipo, setTipo] = React.useState<EventType>("INSEMINAÇÃO");
   const [data, setData] = React.useState<string>(toISO(new Date()));
   const [descricao, setDescricao] = React.useState("");
 

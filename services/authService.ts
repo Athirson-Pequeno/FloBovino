@@ -8,7 +8,6 @@ export async function login(email: string, senha: string) {
     });
 
     if (error) {
-      // Mensagem amigável para usuário
       if (error.message.toLowerCase().includes("invalid login credentials")) {
         throw new Error("E-mail ou senha incorretos.");
       }
@@ -19,7 +18,6 @@ export async function login(email: string, senha: string) {
       throw new Error("Erro inesperado: sessão não encontrada.");
     }
 
-    // Retorna a sessão completa (user + access token)
     return data.session;
   } catch (err: any) {
     console.error("Erro ao fazer login:", err.message || err);

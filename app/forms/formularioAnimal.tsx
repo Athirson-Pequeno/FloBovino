@@ -1,74 +1,55 @@
 // app/forms/formularioAnimal.tsx
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
-  Modal,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
-
-import { Calendar, LocaleConfig } from "react-native-calendars";
-
-// Locale PT-BR para o calendário (Android)
-LocaleConfig.locales["pt-br"] = {
-  monthNames: [
-    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
-  ],
-  monthNamesShort: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
-  dayNames: ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"],
-  dayNamesShort: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"],
-  today: "Hoje",
-};
-LocaleConfig.defaultLocale = "pt-br";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 import { Animal, obterAnimal, salvarAnimal } from "../../services/animalService";
 
 /* ===================== Helpers de Data ===================== */
-function pad(n: number) {
-  return String(n).padStart(2, "0");
-}
-function formatBR(d?: Date | null) {
-  if (!d) return "";
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-}
-function parseBR(s?: string) {
+const pad = (n: number) => String(n).padStart(2, "0");
+const formatBR = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+const parseBR = (s?: string) => {
   if (!s) return null;
   const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (!m) return null;
   const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
   return isNaN(d.getTime()) ? null : d;
-}
-function toISODate(d: Date) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-function brToISO(s: string) {
-  const d = parseBR(s);
-  return d ? toISODate(d) : "";
-}
-function clampByBounds(
-  d: Date,
-  { minDate, maxDate }: { minDate?: Date; maxDate?: Date }
-) {
+};
+const clampByBounds = (d: Date, { minDate, maxDate }: { minDate?: Date; maxDate?: Date }) => {
   if (maxDate && d > maxDate) return maxDate;
   if (minDate && d < minDate) return minDate;
   return d;
+};
+
+function formatISO(br: string) {
+  const d = parseBR(br);
+  if (!d) return "";
+  return toISODate(d);
+}
+function toISODate(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/* ===================== Campo de Data Universal ===================== */
-function DatePickerField({
+// Função que converte YYYY-MM-DD para Date local sem alterar o dia
+function parseISOToLocal(iso: string) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(year, month - 1, day); // cria no horário local
+}
+
+/* ===================== DatePicker Simples ===================== */
+export function DatePicker({
   label,
   value,
   onChange,
@@ -76,277 +57,87 @@ function DatePickerField({
   minDate,
 }: {
   label: string;
-  value: string;        // dd/mm/aaaa
+  value: string;
   onChange: (s: string) => void;
   maxDate?: Date;
   minDate?: Date;
 }) {
-  const [open, setOpen] = useState(false);              // iOS modal
-  const [androidOpen, setAndroidOpen] = useState(false); // Android modal
+  const [show, setShow] = useState(false);
   const current = parseBR(value) ?? new Date();
 
-  // ======== WEB: input mascarado simples ========
+  const handleChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
+    setShow(Platform.OS === "ios"); // iOS mantém aberto
+    if (selectedDate) {
+      const clamped = clampByBounds(selectedDate, { minDate, maxDate });
+      onChange(formatBR(clamped));
+    }
+  };
+
+  // ===== Web fallback =====
   if (Platform.OS === "web") {
-    const [webText, setWebText] = useState<string>(value || "");
-    React.useEffect(() => setWebText(value || ""), [value]);
+    const [text, setText] = useState(value || "");
+    React.useEffect(() => setText(value || ""), [value]);
 
-    const mask = (raw: string) => {
-      const digits = raw.replace(/\D/g, "").slice(0, 8);
-      let out = digits;
-      if (digits.length > 2) out = `${digits.slice(0, 2)}/${digits.slice(2)}`;
-      if (digits.length > 4) out = `${out.slice(0, 5)}/${digits.slice(4)}`;
-      return out;
-    };
-
-    const handleWebChange = (e: any) => {
-      const next = mask(e.target.value as string);
-      setWebText(next);
-      if (next.length === 10) {
-        const d = parseBR(next);
-        if (d) {
-          const clamped = clampByBounds(d, { minDate, maxDate });
-          const finalStr = formatBR(clamped);
-          setWebText(finalStr);
-          onChange(finalStr);
-        }
-      }
-    };
-
-    // @ts-ignore (DOM web)
     return (
       <View style={{ gap: 6 }}>
         <Text style={styles.label}>{label}</Text>
         <input
-          type="text"
-          inputMode="numeric"
-          placeholder="dd/mm/aaaa"
-          value={webText}
-          onChange={handleWebChange}
-          onBlur={() => {
-            if (webText.length === 10) {
-              const d = parseBR(webText);
-              if (d) {
-                const clamped = clampByBounds(d, { minDate, maxDate });
-                const finalStr = formatBR(clamped);
-                setWebText(finalStr);
-                onChange(finalStr);
-              }
-            }
+          type="date"
+          value={value ? formatISO(value) : ""}
+          max={maxDate ? toISODate(maxDate) : undefined}
+          min={minDate ? toISODate(minDate) : undefined}
+          onChange={(e) => {
+            const d = parseISOToLocal(e.target.value);
+            if (!isNaN(d.getTime())) onChange(formatBR(d));
           }}
           style={{
             width: "100%",
-            display: "block",
-            boxSizing: "border-box",
-            background: "#f9f9f9",
-            border: "1px solid #ccc",
+            padding: 10,
             borderRadius: 10,
-            padding: "10px 12px",
-            height: 44,
-            outline: "none",
+            border: "1px solid #ccc",
+            boxSizing: "border-box",
           }}
         />
       </View>
     );
   }
 
-  // ======== MOBILE (Android / iOS) ========
-  const [tempDate, setTempDate] = useState<Date>(current);
-
-  const openIOS = () => {
-    setTempDate(parseBR(value) ?? new Date());
-    setOpen(true);
-  };
-  const confirmIOS = () => {
-    const clamped = clampByBounds(tempDate, { minDate, maxDate });
-    onChange(formatBR(clamped));
-    setOpen(false);
-  };
-
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 6, width: "100%" }}>
       <Text style={styles.label}>{label}</Text>
-
-      <Pressable
-        onPress={() =>
-          Platform.OS === "android" ? setAndroidOpen(true) : openIOS()
-        }
-      >
-        <TextInput
-          value={value}
-          placeholder="dd/mm/aaaa"
-          editable={false}
-          pointerEvents="none"
-          style={styles.input}
+      <TouchableOpacity onPress={() => setShow(true)} style={styles.input}>
+        <Text>{value || "dd/mm/aaaa"}</Text>
+      </TouchableOpacity>
+      {show && (
+        <DateTimePicker
+          value={current}
+          mode="date"
+          display={Platform.OS === "ios" ? "inline" : "default"}
+          onChange={handleChange}
+          maximumDate={maxDate}
+          minimumDate={minDate}
         />
-      </Pressable>
-
-      {/* ANDROID: Modal + Calendar (verde) */}
-      {Platform.OS === "android" && (
-        <Modal
-          transparent
-          visible={androidOpen}
-          animationType="fade"
-          onRequestClose={() => setAndroidOpen(false)}
-        >
-          <View style={androidStyles.backdrop}>
-            <View style={androidStyles.sheet}>
-              <Calendar
-                initialDate={brToISO(value) || toISODate(new Date())}
-                minDate={minDate ? toISODate(minDate) : undefined}
-                maxDate={maxDate ? toISODate(maxDate) : undefined}
-                onDayPress={(day) => {
-                  const d = new Date(day.dateString);
-                  const clamped = clampByBounds(d, { minDate, maxDate });
-                  onChange(formatBR(clamped));
-                  setAndroidOpen(false);
-                }}
-                markedDates={
-                  value
-                    ? { [brToISO(value)]: { selected: true, selectedColor: "#00780a" } }
-                    : undefined
-                }
-                theme={{
-                  calendarBackground: "#fff",
-                  monthTextColor: "#00780a",
-                  selectedDayBackgroundColor: "#00780a",
-                  selectedDayTextColor: "#fff",
-                  todayTextColor: "#00780a",
-                  arrowColor: "#00780a",
-                  textSectionTitleColor: "#555",
-                }}
-              />
-              <View style={androidStyles.actions}>
-                <TouchableOpacity onPress={() => setAndroidOpen(false)}>
-                  <Text style={androidStyles.actionText}>Cancelar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {/* iOS: Modal + DateTimePicker nativo */}
-      {Platform.OS === "ios" && (
-        <Modal
-          visible={open}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setOpen(false)}
-        >
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "rgba(0,0,0,0.35)",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: 20,
-            }}
-          >
-            <View
-              style={{
-                width: "100%",
-                maxWidth: 360,
-                backgroundColor: "#fff",
-                borderRadius: 12,
-                padding: 12,
-              }}
-            >
-              <DateTimePicker
-                value={tempDate}
-                mode="date"
-                display={
-                  (() => {
-                    const v = parseFloat(String(Platform.Version));
-                    return isNaN(v) || v < 14 ? "spinner" : "inline";
-                  })()
-                }
-                locale="pt-BR"
-                onChange={(_: DateTimePickerEvent, selected?: Date) => {
-                  if (selected) setTempDate(selected);
-                }}
-                maximumDate={maxDate}
-                minimumDate={minDate}
-                style={{ width: "100%", backgroundColor: "#fff" }}
-                themeVariant="light"
-                accentColor="#00780a"
-              />
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "flex-end",
-                  gap: 12,
-                  marginTop: 8,
-                }}
-              >
-                <TouchableOpacity onPress={() => setOpen(false)}>
-                  <Text style={{ color: "#555", fontWeight: "600" }}>
-                    Cancelar
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={confirmIOS}>
-                  <Text style={{ color: "#00780a", fontWeight: "700" }}>
-                    OK
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
       )}
     </View>
   );
-}
+};
 
-/* ===================== Estilos Android Modal ===================== */
-const androidStyles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 16,
-  },
-  sheet: {
-    width: "100%",
-    maxWidth: 360,
-    borderRadius: 14,
-    backgroundColor: "#fff",
-    overflow: "hidden",
-  },
-  actions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    paddingHorizontal: 14,
-    paddingBottom: 12,
-    paddingTop: 8,
-  },
-  actionText: { color: "#00780a", fontWeight: "700" },
-});
-
-/* ===================== Tipagem do Form (local) ===================== */
+/* ===================== Tipagem do Form ===================== */
 type AnimalForm = {
   nome: string;
   raca: string;
   sexo: "M" | "F" | "";
   dataNascimento: string;
-
   pai_nome: string;
   pai_registro: string;
   pai_raca: string;
-
   mae_nome: string;
   mae_registro: string;
   mae_raca: string;
 };
 
 /* ===================== UI Auxiliares ===================== */
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <View style={styles.section}>
     <Text style={styles.sectionTitle}>{title}</Text>
     {children}
@@ -381,8 +172,7 @@ const LabeledInput = ({
 /* ===================== Tela ===================== */
 export default function FormularioAnimal() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id?: string }>(); // edição se vier id
-
+  const { id } = useLocalSearchParams<{ id?: string }>();
   const [animalId, setAnimalId] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -403,13 +193,10 @@ export default function FormularioAnimal() {
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const obrigatoriosOk =
-    !!form.nome.trim() &&
-    !!form.raca.trim() &&
-    !!form.sexo &&
-    !!form.dataNascimento.trim();
+    !!form.nome.trim() && !!form.raca.trim() && !!form.sexo && !!form.dataNascimento.trim();
 
-  // Carregar dados quando estiver editando
-  React.useEffect(() => {
+  /* Carregar dados quando estiver editando */
+  useEffect(() => {
     if (!id) return;
     (async () => {
       try {
@@ -435,10 +222,7 @@ export default function FormularioAnimal() {
 
   const onSalvar = async () => {
     if (!obrigatoriosOk) {
-      Alert.alert(
-        "Campos obrigatórios",
-        "Preencha Nome, Raça, Sexo e Data de Nascimento."
-      );
+      Alert.alert("Campos obrigatórios", "Preencha Nome, Raça, Sexo e Data de Nascimento.");
       return;
     }
 
@@ -484,25 +268,13 @@ export default function FormularioAnimal() {
         extraScrollHeight={250}
         enableOnAndroid={true}
       >
-        <Text style={styles.mainTitle}>
-          {animalId ? "Editar Animal" : "Cadastro de Animal"}
-        </Text>
-        <Text style={styles.subtitle}>
-          Preencha as informações abaixo.
-        </Text>
+        <Text style={styles.mainTitle}>{animalId ? "Editar Animal" : "Cadastro de Animal"}</Text>
+        <Text style={styles.subtitle}>Preencha as informações abaixo.</Text>
 
         {/* Dados do Animal */}
         <Section title="Dados do Animal">
-          <LabeledInput
-            label="Nome *"
-            value={form.nome}
-            onChangeText={(t) => setField("nome", t)}
-          />
-          <LabeledInput
-            label="Raça *"
-            value={form.raca}
-            onChangeText={(t) => setField("raca", t)}
-          />
+          <LabeledInput label="Nome *" value={form.nome} onChangeText={(t) => setField("nome", t)} />
+          <LabeledInput label="Raça *" value={form.raca} onChangeText={(t) => setField("raca", t)} />
 
           <View style={{ gap: 6 }}>
             <Text style={styles.label}>Sexo *</Text>
@@ -512,17 +284,9 @@ export default function FormularioAnimal() {
                   key={sx}
                   onPress={() => setField("sexo", sx)}
                   activeOpacity={0.85}
-                  style={[
-                    styles.sexoBtn,
-                    form.sexo === sx && styles.sexoBtnActive,
-                  ]}
+                  style={[styles.sexoBtn, form.sexo === sx && styles.sexoBtnActive]}
                 >
-                  <Text
-                    style={[
-                      styles.sexoBtnText,
-                      form.sexo === sx && { color: "#fff" },
-                    ]}
-                  >
+                  <Text style={[styles.sexoBtnText, form.sexo === sx && { color: "#fff" }]}>
                     {sx === "M" ? "Macho" : "Fêmea"}
                   </Text>
                 </TouchableOpacity>
@@ -530,8 +294,7 @@ export default function FormularioAnimal() {
             </View>
           </View>
 
-          {/* Data de Nascimento */}
-          <DatePickerField
+          <DatePicker
             label="Data de Nascimento *"
             value={form.dataNascimento}
             onChange={(s) => setField("dataNascimento", s)}
@@ -541,49 +304,23 @@ export default function FormularioAnimal() {
 
         {/* Informações do Pai */}
         <Section title="Informações do Pai">
-          <LabeledInput
-            label="Nome"
-            value={form.pai_nome}
-            onChangeText={(t) => setField("pai_nome", t)}
-          />
-          <LabeledInput
-            label="Registro"
-            value={form.pai_registro}
-            onChangeText={(t) => setField("pai_registro", t)}
-          />
-          <LabeledInput
-            label="Raça"
-            value={form.pai_raca}
-            onChangeText={(t) => setField("pai_raca", t)}
-          />
+          <LabeledInput label="Nome" value={form.pai_nome} onChangeText={(t) => setField("pai_nome", t)} />
+          <LabeledInput label="Registro" value={form.pai_registro} onChangeText={(t) => setField("pai_registro", t)} />
+          <LabeledInput label="Raça" value={form.pai_raca} onChangeText={(t) => setField("pai_raca", t)} />
         </Section>
 
         {/* Informações da Mãe */}
         <Section title="Informações da Mãe">
-          <LabeledInput
-            label="Nome"
-            value={form.mae_nome}
-            onChangeText={(t) => setField("mae_nome", t)}
-          />
-          <LabeledInput
-            label="Registro"
-            value={form.mae_registro}
-            onChangeText={(t) => setField("mae_registro", t)}
-          />
-          <LabeledInput
-            label="Raça"
-            value={form.mae_raca}
-            onChangeText={(t) => setField("mae_raca", t)}
-          />
+          <LabeledInput label="Nome" value={form.mae_nome} onChangeText={(t) => setField("mae_nome", t)} />
+          <LabeledInput label="Registro" value={form.mae_registro} onChangeText={(t) => setField("mae_registro", t)} />
+          <LabeledInput label="Raça" value={form.mae_raca} onChangeText={(t) => setField("mae_raca", t)} />
         </Section>
 
         {/* Botão Eventos (só aparece com id) */}
         {animalId && (
           <TouchableOpacity
             activeOpacity={0.85}
-            onPress={() =>
-              router.push({ pathname: "/pages/eventos", params: { animalId } })
-            }
+            onPress={() => router.push({ pathname: "/pages/eventos", params: { animalId } })}
             style={[styles.saveBtn, { backgroundColor: "#1e90ff", marginBottom: 8 }]}
           >
             <Text style={styles.saveBtnText}>Ver eventos do animal</Text>
@@ -594,16 +331,10 @@ export default function FormularioAnimal() {
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={onSalvar}
-          disabled={salvando}
-          style={[
-            styles.saveBtn,
-            salvando && { opacity: 0.6 },
-            !obrigatoriosOk && { opacity: 0.6 },
-          ]}
+          disabled={salvando || !obrigatoriosOk}
+          style={[styles.saveBtn, (salvando || !obrigatoriosOk) && { opacity: 0.6 }]}
         >
-          <Text style={styles.saveBtnText}>
-            {salvando ? "Salvando..." : (animalId ? "Salvar alterações" : "Salvar Animal")}
-          </Text>
+          <Text style={styles.saveBtnText}>{salvando ? "Salvando..." : animalId ? "Salvar alterações" : "Salvar Animal"}</Text>
         </TouchableOpacity>
       </KeyboardAwareScrollView>
     </KeyboardAvoidingView>
@@ -612,57 +343,17 @@ export default function FormularioAnimal() {
 
 /* ===================== Estilos ===================== */
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: "#fff",
-    gap: 20,
-    alignItems: "center",
-  },
-  mainTitle: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#00780a",
-    textAlign: "center",
-  },
+  container: { padding: 20, backgroundColor: "#fff", gap: 20, alignItems: "center" },
+  mainTitle: { fontSize: 26, fontWeight: "bold", color: "#00780a", textAlign: "center" },
   subtitle: { fontSize: 15, color: "#555", textAlign: "center", marginBottom: 10 },
-  section: {
-    borderWidth: 1,
-    width: "100%",
-    maxWidth: 800,
-    borderColor: "#e6e6e6",
-    borderRadius: 12,
-    padding: 12,
-    gap: 12,
-  },
+  section: { borderWidth: 1, width: "100%", maxWidth: 800, borderColor: "#e6e6e6", borderRadius: 12, padding: 12, gap: 12 },
   sectionTitle: { fontWeight: "700", fontSize: 16, color: "#00780a" },
   label: { fontWeight: "600", color: "#222" },
-  input: {
-    backgroundColor: "#f9f9f9",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
+  input: { backgroundColor: "#f9f9f9", borderWidth: 1, borderColor: "#ccc", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
   sexoRow: { flexDirection: "row", gap: 10 },
-  sexoBtn: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-  },
+  sexoBtn: { borderWidth: 1, borderColor: "#ccc", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
   sexoBtnActive: { backgroundColor: "#00780a", borderColor: "#00780a" },
   sexoBtnText: { color: "#00780a", fontWeight: "600" },
-  saveBtn: {
-    backgroundColor: "#00780a",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 12,
-    width: "100%",
-    maxWidth: 800,
-    textAlign: "center",
-  },
+  saveBtn: { backgroundColor: "#00780a", paddingVertical: 14, borderRadius: 12, alignItems: "center", marginBottom: 12, width: "100%", maxWidth: 800, textAlign: "center" },
   saveBtnText: { color: "#fff", fontWeight: "800" },
 });

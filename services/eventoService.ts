@@ -3,12 +3,8 @@ import { supabase } from "../config/supabase_config";
 export type EventType =
   | "VACINA"
   | "INSEMINAÇÃO"
-  | "CONSULTA"
-  | "MEDICACAO"
-  | "REPRODUCAO"
-  | "OCORRENCIA"
-  | "NASCIMENTO"
-  | "BAIXA";
+  | "REPRODUÇÃO"
+  | "NASCIMENTO";
 
 export interface AnimalEvent {
   id?: number;
