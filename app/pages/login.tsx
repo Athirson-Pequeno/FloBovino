@@ -27,7 +27,7 @@ export default function LoginScreen() {
     setLoading(true);
     const session = await login(email, password);
     Alert.alert("Sucesso", `Bem-vindo(a), ${session.user.email}!`);
-    router.replace("/pages/home");
+    router.replace("../(tabs)");
   } catch (err: any) {
     Alert.alert("Falha no login", err.message);
   } finally {
