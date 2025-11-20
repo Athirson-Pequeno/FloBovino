@@ -34,14 +34,18 @@ type AnimalDB = {
 
 const TABLE = "animais";
 
-/* Datas */
-function pad(n: number) { return String(n).padStart(2, "0"); }
+/* ===== Datas ===== */
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
+
 function isoToBR(iso?: string | null): string {
   if (!iso) return "";
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return "";
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
+
 function brToISO(br?: string | null): string | null {
   if (!br) return null;
   const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -68,7 +72,11 @@ function fromDB(a: AnimalDB): Animal {
   };
 }
 
-function toDB(a: Animal): Omit<AnimalDB, "id"> {
+/**
+ * toDB: payload base para INSERT/UPDATE
+ * ➜ NÃO envia fazendeiro_id (pra não apagar no update)
+ */
+function toDB(a: Animal): Omit<AnimalDB, "id" | "fazendeiro_id" | "criado_em"> {
   return {
     nome: a.nome,
     raca: a.raca,
@@ -80,16 +88,16 @@ function toDB(a: Animal): Omit<AnimalDB, "id"> {
     mae_nome: a.mae_nome ?? null,
     mae_registro: a.mae_registro ?? null,
     mae_raca: a.mae_raca ?? null,
-    fazendeiro_id: a.fazendeiro_id ?? null,
   };
 }
 
-/* CRUD */
+/* ===== CRUD ===== */
 export async function listarAnimais(): Promise<Animal[]> {
   const { data, error } = await supabase
     .from(TABLE)
     .select("*")
     .order("nome", { ascending: true });
+
   if (error) throw error;
   return (data as AnimalDB[]).map(fromDB);
 }
@@ -98,37 +106,53 @@ export async function listarAnimaisDoUsuario(): Promise<Animal[]> {
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   if (userErr) throw userErr;
   const userId = userData.user?.id;
+
   const { data, error } = await supabase
     .from(TABLE)
     .select("*")
     .eq("fazendeiro_id", userId ?? "")
     .order("nome", { ascending: true });
+
   if (error) throw error;
   return (data as AnimalDB[]).map(fromDB);
 }
 
 export async function obterAnimal(id: string): Promise<Animal> {
-  const { data, error } = await supabase.from(TABLE).select("*").eq("id", id).single();
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select("*")
+    .eq("id", id)
+    .single();
+
   if (error) throw error;
   return fromDB(data as AnimalDB);
 }
 
 export async function salvarAnimal(a: Animal): Promise<Animal> {
-  const payload = toDB(a);
+  const basePayload = toDB(a);
+
   if (a.id) {
+    // UPDATE ➜ não mexe em fazendeiro_id
     const { data, error } = await supabase
-      .from(TABLE).update(payload).eq("id", a.id).select().single();
+      .from(TABLE)
+      .update(basePayload)
+      .eq("id", a.id)
+      .select()
+      .single();
+
     if (error) throw error;
     return fromDB(data as AnimalDB);
   } else {
-    // opcional: amarrar ao usuário logado
+    // INSERT ➜ define fazendeiro_id com o usuário logado
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id ?? null;
+
     const { data, error } = await supabase
       .from(TABLE)
-      .insert({ ...payload, fazendeiro_id: userId })
+      .insert({ ...basePayload, fazendeiro_id: userId })
       .select()
       .single();
+
     if (error) throw error;
     return fromDB(data as AnimalDB);
   }

@@ -1,4 +1,6 @@
-import { Stack } from "expo-router";
+// app/forms/formularioFazendeiro.tsx
+import { Ionicons } from "@expo/vector-icons";
+import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -8,12 +10,14 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { salvarFazendeiro } from "../../services/fazendeiroService";
 
 export default function FormularioFazendeiro() {
+  const router = useRouter(); // 🔹 para voltar
+
   const [fazendeiro, setFazendeiro] = useState({
     nome: "",
     email: "",
@@ -41,9 +45,9 @@ export default function FormularioFazendeiro() {
   const handleSubmit = async () => {
     try {
       await salvarFazendeiro(fazendeiro);
-      Alert.alert('Sucesso', 'Fazendeiro cadastrado com sucesso!');
+      Alert.alert("Sucesso", "Fazendeiro cadastrado com sucesso!");
     } catch (err) {
-      Alert.alert('Erro', 'Não foi possível salvar o fazendeiro.' + err);
+      Alert.alert("Erro", "Não foi possível salvar o fazendeiro." + err);
     }
 
     // Limpar os campos
@@ -66,6 +70,7 @@ export default function FormularioFazendeiro() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
     >
+      {/* usamos header inline, então escondemos o nativo */}
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAwareScrollView
@@ -75,6 +80,17 @@ export default function FormularioFazendeiro() {
         extraScrollHeight={120}
         enableOnAndroid={true}
       >
+        {/* 🔹 Botão de voltar (somente a seta, igual no formulário de Animal) */}
+        <View style={styles.inlineHeader}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#00780a" />
+          </Pressable>
+        </View>
+
         <View style={styles.header}>
           <Text style={styles.title}>Cadastro de Fazendeiro</Text>
           <Text style={styles.subtitle}>
@@ -155,12 +171,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   scroll: {
-    flexGrow: 1, // ✅ deixa o conteúdo crescer e rolar
+    flexGrow: 1,
     alignItems: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
     backgroundColor: "#fff",
   },
+
+  // 🔹 Header inline do botão de voltar
+  inlineHeader: {
+    width: "100%",
+    maxWidth: 400,
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    marginBottom: 8,
+  },
+  backButton: {
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+
   header: {
     alignItems: "center",
     marginBottom: 30,
@@ -214,4 +245,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-

@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { Pressable, StyleSheet, Text, View, Image } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
   return (
@@ -10,7 +10,7 @@ export default function HomeScreen() {
           source={require("@/assets/images/logo.png")} 
           style={styles.logo}
         />
-        <Text style={styles.title}>Bem-vindo ao AgroConnect</Text>
+        <Text style={styles.title}>Bem-vindo ao Flo Bovino</Text>
         <Text style={styles.subtitle}>
           Cadastre-se ou entre para continuar
         </Text>

@@ -1,15 +1,16 @@
+import { login } from "@/services/authService";
+import { Ionicons } from "@expo/vector-icons";
+import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
   ActivityIndicator,
   Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import { Stack, useRouter } from "expo-router";
-import { login } from "@/services/authService";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -17,27 +18,43 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-  if (!email || !password) {
-    Alert.alert("Erro", "Preencha email e senha.");
-    return;
-  }
+  // Só mostra o botão de voltar se existir algo na pilha
+  const canGoBack = router.canGoBack?.() ?? false;
 
-  try {
-    setLoading(true);
-    const session = await login(email, password);
-    Alert.alert("Sucesso", `Bem-vindo(a), ${session.user.email}!`);
-    router.replace("../(tabs)");
-  } catch (err: any) {
-    Alert.alert("Falha no login", err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Erro", "Preencha email e senha.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const session = await login(email, password);
+      Alert.alert("Sucesso", `Bem-vindo(a), ${session.user.email}!`);
+      router.replace("../(tabs)");
+    } catch (err: any) {
+      Alert.alert("Falha no login", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
+
+      {/* 🔹 Header inline com voltar (só se puder voltar) */}
+      {canGoBack && (
+        <View style={styles.inlineHeader}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#00780a" />
+          </Pressable>
+        </View>
+      )}
 
       <View style={styles.header}>
         <Text style={styles.title}>Bem-vindo(a)</Text>
@@ -89,7 +106,6 @@ export default function LoginScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -98,6 +114,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
   },
+
+  // 🔹 Header inline do botão de voltar
+  inlineHeader: {
+    position: "absolute",
+    top: 40,
+    left: 20,
+  },
+  backButton: {
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+
   header: {
     alignItems: "center",
     marginBottom: 40,

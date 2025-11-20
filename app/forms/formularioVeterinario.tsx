@@ -1,4 +1,5 @@
-import { Stack } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -14,6 +15,8 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { salvarVeterinario } from "../../services/veterinarioService";
 
 export default function VeterinarioForm() {
+  const router = useRouter();
+
   const [veterinario, setVeterinario] = useState({
     crmv: "",
     nome: "",
@@ -50,7 +53,6 @@ export default function VeterinarioForm() {
       Alert.alert('Erro', 'Não foi possível salvar o veterinário.' + err);
     }
 
-    // Limpar os campos
     setVeterinario({
       crmv: "",
       nome: "",
@@ -74,6 +76,7 @@ export default function VeterinarioForm() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 70 : 0}
     >
+      {/* removemos o header nativo */}
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAwareScrollView
@@ -83,6 +86,18 @@ export default function VeterinarioForm() {
         extraScrollHeight={120}
         enableOnAndroid={true}
       >
+
+        {/* 🔹 Botão de voltar (somente a seta) */}
+        <View style={styles.inlineHeader}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#00780a" />
+          </Pressable>
+        </View>
+
         <View style={styles.header}>
           <Text style={styles.title}>Cadastro de Veterinário</Text>
           <Text style={styles.subtitle}>
@@ -91,7 +106,6 @@ export default function VeterinarioForm() {
         </View>
 
         <View style={styles.formContainer}>
-          {/* Campos principais */}
           <TextInput
             style={styles.input}
             value={veterinario.crmv}
@@ -130,7 +144,6 @@ export default function VeterinarioForm() {
             secureTextEntry
           />
 
-          {/* Endereço */}
           <Text style={styles.sectionTitle}>Endereço</Text>
 
           <TextInput
@@ -176,7 +189,6 @@ export default function VeterinarioForm() {
             placeholder="Complemento (opcional)"
           />
 
-          {/* Botão */}
           <Pressable style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitButtonText}>Cadastrar</Text>
           </Pressable>
@@ -187,17 +199,27 @@ export default function VeterinarioForm() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
   scroll: {
-    flexGrow: 1, // ✅ deixa o conteúdo crescer e rolar
+    flexGrow: 1,
     alignItems: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
     backgroundColor: "#fff",
   },
+
+  inlineHeader: {
+    width: "100%",
+    maxWidth: 400,
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    marginBottom: 8,
+  },
+  backButton: {
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+
   header: {
     alignItems: "center",
     marginBottom: 30,
@@ -213,6 +235,7 @@ const styles = StyleSheet.create({
     color: "#555",
     textAlign: "center",
   },
+
   formContainer: {
     width: "100%",
     maxWidth: 400,

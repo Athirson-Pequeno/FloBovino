@@ -1,16 +1,17 @@
-// app/home.tsx
+// Home (aba principal após login)
+
 import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
-import { Link, Stack } from "expo-router";
+import { Link } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Pressable,
   StyleSheet,
   Text,
   View,
-  Dimensions
 } from "react-native";
 
 import EventosModal from "@/components/eventosModal";
@@ -55,6 +56,7 @@ export default function HomeScreen() {
   const [dados, setDados] = useState<TipoDado[]>([]);
   const [loading, setLoading] = useState(true);
   const [tipoUsuario, setTipoUsuario] = useState<Usuario["tipo"] | null>(null);
+  const [nomeUsuario, setNomeUsuario] = useState<string | null>(null);
 
   const [animalSelecionado, setAnimalSelecionado] = useState<Animal | null>(null);
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -63,7 +65,6 @@ export default function HomeScreen() {
     setAnimalSelecionado(animal);
     setMostrarModal(true);
   }
-
 
   useFocusEffect(
     useCallback(() => {
@@ -82,7 +83,9 @@ export default function HomeScreen() {
             .single();
 
           if (perfilError) throw perfilError;
+
           setTipoUsuario(perfilData.tipo);
+          setNomeUsuario(perfilData.nome);
 
           if (perfilData.tipo === "fazendeiro") {
             const animais = await listarAnimaisDoUsuario();
@@ -107,10 +110,8 @@ export default function HomeScreen() {
       const animal = item as Animal;
 
       return (
-        <View style={styles.item}>
-          {/* Card do animal -> leva para eventos */}
-
-          <Pressable style={styles.itemLeft} onPress={() => abrirModal(animal)}>
+        <Pressable style={styles.card} onPress={() => abrirModal(animal)}>
+          <View style={styles.cardLeft}>
             <Image
               source={{
                 uri: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Cow_female_black_white.jpg",
@@ -118,24 +119,23 @@ export default function HomeScreen() {
               style={styles.image}
               contentFit="cover"
             />
-            <View>
-              <Text style={styles.name}>{animal.nome}</Text>
-              <Text style={styles.age}>
-                {animal.raca} - {animal.sexo === "M" ? "Macho" : "Fêmea"}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>{animal.nome}</Text>
+              <Text style={styles.cardSubtitle}>
+                {animal.raca} • {animal.sexo === "M" ? "Macho" : "Fêmea"}
               </Text>
+              <Text style={styles.cardHint}>Toque para ver os eventos do animal</Text>
             </View>
-          </Pressable>
-        </View>
+          </View>
+        </Pressable>
       );
     } else if (tipoUsuario === "veterinario") {
       const cliente = item as Cliente;
       return (
-        <View style={styles.item}>
-          <View>
-            <Text style={styles.name}>{cliente.usuarios.nome}</Text>
-            <Text style={styles.age}>{cliente.usuarios.email}</Text>
-            <Text style={styles.age}>{cliente.cidade}</Text>
-          </View>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{cliente.usuarios.nome}</Text>
+          <Text style={styles.cardSubtitle}>{cliente.usuarios.email}</Text>
+          <Text style={styles.cardHint}>{cliente.cidade}</Text>
         </View>
       );
     }
@@ -152,24 +152,50 @@ export default function HomeScreen() {
     );
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+  const labelQuantidade =
+    tipoUsuario === "fazendeiro" ? "Animais cadastrados" : "Clientes vinculados";
 
+  return (
+    <View style={styles.container}>
+      {/* HEADER MODERNO */}
+      <View style={styles.header}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerGreeting}>
+            Olá, {nomeUsuario ? nomeUsuario.split(" ")[0] : "produtor(a)"}
+          </Text>
+          <Text style={styles.headerTitle}>
+            {tipoUsuario === "fazendeiro"
+              ? "Seu rebanho sob controle"
+              : "Sua agenda no campo"}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            Acompanhe eventos, inseminações, vacinas e histórico reprodutivo.
+          </Text>
+        </View>
+
+        <View style={styles.headerBadge}>
+          <Text style={styles.headerBadgeNumber}>{dados.length}</Text>
+          <Text style={styles.headerBadgeLabel}>{labelQuantidade}</Text>
+        </View>
+      </View>
+
+      {/* LISTA */}
       <FlatList
         data={dados}
         keyExtractor={(item) => (item as any).id}
         renderItem={renderItem}
         contentContainerStyle={[
-          styles.listContainer,
+          styles.listContent,
           isDesktop && { width: 700, alignSelf: "center" },
         ]}
         ListEmptyComponent={
-          <Text style={{ textAlign: "center", marginTop: 20, color: "#555" }}>
-            Nenhum dado cadastrado ainda.
+          <Text style={styles.emptyText}>
+            Nenhum registro encontrado ainda. Comece cadastrando um animal.
           </Text>
         }
       />
 
+      {/* MODAL DE EVENTOS */}
       {animalSelecionado && (
         <EventosModal
           visible={mostrarModal}
@@ -178,7 +204,7 @@ export default function HomeScreen() {
         />
       )}
 
-
+      {/* BOTÃO FIXO NO RODAPÉ */}
       <View style={styles.footer}>
         {tipoUsuario === "fazendeiro" && (
           <Link href="../forms/formularioAnimal" asChild>
@@ -189,7 +215,7 @@ export default function HomeScreen() {
         )}
 
         {tipoUsuario === "veterinario" && (
-          <Link href="../pages/veterinarios" asChild style={{ marginTop: 10 }}>
+          <Link href="../pages/veterinarios" asChild>
             <Pressable style={styles.primaryButton}>
               <Text style={styles.primaryButtonText}>Selecionar fazendeiro</Text>
             </Pressable>
@@ -201,53 +227,137 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  item: {
-    padding: 10,
+  /* CONTAINER GERAL */
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F7F5",
+  },
+
+  /* HEADER */
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  headerGreeting: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 2,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#006400",
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: "#777",
+  },
+  headerBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: "#E8F5E9",
+    alignItems: "center",
+    minWidth: 90,
+  },
+  headerBadgeNumber: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#00780a",
+  },
+  headerBadgeLabel: {
+    fontSize: 10,
+    textAlign: "center",
+    color: "#2E7D32",
+  },
+
+  /* LISTA */
+  listContent: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 120,
+    gap: 8,
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 30,
+    color: "#777",
+    fontSize: 14,
+  },
+
+  /* CARD */
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 12,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    borderWidth: 2,
-    borderColor: "#606060ff",
-    marginHorizontal: 4,
-    borderRadius: 8,
-    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  listContainer: {
-    padding: 8,
-    gap: 8,
-    paddingBottom: 100,
-    width: "100%", // por padrão ocupa toda a largura
-  },
-  itemLeft: {
+  cardLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     flex: 1,
   },
-  image: { width: 50, height: 50, borderRadius: 5 },
-  name: { color: "#000", fontWeight: "600" },
-  age: { color: "#000" },
-  actions: { flexDirection: "row", gap: 8, marginLeft: 8 },
-  actionBtn: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8 },
-  actionText: { color: "#fff", fontWeight: "700" },
+  image: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#222",
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    color: "#555",
+    marginTop: 2,
+  },
+  cardHint: {
+    fontSize: 11,
+    color: "#888",
+    marginTop: 4,
+  },
+
+  /* FOOTER */
   footer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     alignItems: "center",
-    paddingBottom: 12,
-    backgroundColor: "#fff",
+    paddingBottom: 16,
+    paddingTop: 8,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
   },
   primaryButton: {
     backgroundColor: "#00780a",
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 40,
-    borderRadius: 10,
+    borderRadius: 999,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     elevation: 4,
   },
   primaryButtonText: {
@@ -255,9 +365,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 15,
   },
+
+  /* LOADING */
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#FFFFFF",
   },
 });
